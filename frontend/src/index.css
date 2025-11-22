@@ -1,0 +1,147 @@
+@import "tailwindcss";
+@variant dark (&:where(.dark, .dark *));
+
+/* Custom CSS kamu di bawah sini */
+:root {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  @apply bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-200;
+}
+
+.dark {
+  color-scheme: dark;
+}
+
+a {
+  font-weight: 500;
+  color: #646cff;
+  text-decoration: inherit;
+}
+
+a:hover {
+  color: #535bf2;
+}
+
+/* Styling untuk link di deskripsi task */
+.description-content a {
+  color: #2563eb !important;
+  text-decoration: underline !important;
+  cursor: pointer !important;
+  font-weight: 500 !important;
+  transition: color 0.2s ease !important;
+  word-break: break-all !important;
+}
+
+.description-content a:hover {
+  color: #1d4ed8 !important;
+  text-decoration: underline !important;
+  background-color: rgba(37, 99, 235, 0.1) !important;
+  border-radius: 3px !important;
+  padding: 1px 2px !important;
+}
+
+.description-content a:visited {
+  color: #7c3aed !important;
+}
+
+.description-content a:active {
+  color: #dc2626 !important;
+}
+
+/* Styling khusus untuk URL yang di-detect otomatis */
+.url-link {
+  color: #2563eb !important;
+  text-decoration: underline !important;
+  cursor: pointer !important;
+  font-weight: 500 !important;
+  word-break: break-all !important;
+  transition: all 0.2s ease !important;
+  display: inline-block !important;
+}
+
+.url-link:hover {
+  color: #1d4ed8 !important;
+  text-decoration: underline !important;
+  background-color: rgba(37, 99, 235, 0.1) !important;
+  border-radius: 3px !important;
+  padding: 1px 2px !important;
+  transform: translateY(-1px) !important;
+}
+
+.url-link:visited {
+  color: #7c3aed !important;
+}
+
+.url-link:active {
+  color: #dc2626 !important;
+  transform: translateY(0) !important;
+}
+
+/* Styling untuk link di modal */
+.modal-content a {
+  color: #2563eb !important;
+  text-decoration: underline !important;
+  cursor: pointer !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease !important;
+  word-break: break-all !important;
+  display: inline-block !important;
+}
+
+.modal-content a:hover {
+  color: #1d4ed8 !important;
+  text-decoration: underline !important;
+  background-color: rgba(37, 99, 235, 0.1) !important;
+  border-radius: 3px !important;
+  padding: 1px 2px !important;
+  transform: translateY(-1px) !important;
+}
+
+.modal-content a:visited {
+  color: #7c3aed !important;
+}
+
+.modal-content a:active {
+  color: #dc2626 !important;
+  transform: translateY(0) !important;
+}
+
+/* Styling khusus untuk URL yang di-detect otomatis di modal */
+.modal-content .url-link {
+  color: #2563eb !important;
+  text-decoration: underline !important;
+  cursor: pointer !important;
+  font-weight: 500 !important;
+  word-break: break-all !important;
+  transition: all 0.2s ease !important;
+  display: inline-block !important;
+}
+
+.modal-content .url-link:hover {
+  color: #1d4ed8 !important;
+  text-decoration: underline !important;
+  background-color: rgba(37, 99, 235, 0.1) !important;
+  border-radius: 3px !important;
+  padding: 1px 2px !important;
+  transform: translateY(-1px) !important;
+}
+
+.modal-content .url-link:visited {
+  color: #7c3aed !important;
+}
+
+.modal-content .url-link:active {
+  color: #dc2626 !important;
+  transform: translateY(0) !important;
+}
+
+/* dst... */
