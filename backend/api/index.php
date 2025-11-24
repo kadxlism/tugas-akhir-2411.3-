@@ -32,6 +32,25 @@ try {
         }
     }
 
+    // DEBUG: List all files to verify vendor exists and find index.html
+    if (isset($_GET['debug_files'])) {
+        $root = realpath(__DIR__ . '/../../');
+        $files = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($root, RecursiveDirectoryIterator::SKIP_DOTS),
+            RecursiveIteratorIterator::SELF_FIRST
+        );
+        
+        $fileList = [];
+        foreach ($files as $file) {
+            $path = $file->isDir() ? $file->getPathname() . '/' : $file->getPathname();
+            $fileList[] = str_replace($root, '', $path);
+        }
+        
+        header('Content-Type: application/json');
+        echo json_encode(['root' => $root, 'files' => $fileList]);
+        exit;
+    }
+
     // Ensure the path exists
     $laravelIndex = __DIR__ . '/../public/index.php';
 
