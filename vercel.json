@@ -3,7 +3,15 @@
     "builds": [
         {
             "src": "backend/api/index.php",
-            "use": "vercel-php"
+            "use": "vercel-php",
+            "config": {
+                "excludeFiles": [
+                    "frontend/**",
+                    "node_modules/**",
+                    ".git/**",
+                    "**/*.md"
+                ]
+            }
         },
         {
             "src": "frontend/package.json",
