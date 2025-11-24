@@ -34,14 +34,53 @@ try {
 
     // Ensure the path exists
     $laravelIndex = __DIR__ . '/../public/index.php';
-    if (!file_exists($laravelIndex)) {
+    $vendorAutoload = __DIR__ . '/../vendor/autoload.php';
+
+    if (!file_exists($vendorAutoload)) {
         http_response_code(500);
-        echo json_encode(['error' => 'Laravel application not found']);
+        echo json_encode([
+            'error' => 'Vendor autoload not found. Composer install failed?',
+            'path' => $vendorAutoload,
+            'cwd' => getcwd(),
+            'files_in_backend' => scandir(__DIR__ . '/../')
+        ]);
         exit;
     }
 
+    if (!file_exists($laravelIndex)) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Laravel application not found', 'path' => $laravelIndex]);
+        exit;
+    }
+
+    // CRITICAL FIX: Capture Laravel's response and ensure it's output as a string
+    // Vercel requires the response body to be a string, not a stream or binary response object
+    ob_start();
+    
     require $laravelIndex;
+    
+    // Get the output buffer content
+    $output = ob_get_clean();
+    
+    // Ensure output is a string (Vercel requirement)
+    if (!is_string($output)) {
+        // If output is not a string, convert it
+        if (is_object($output) || is_array($output)) {
+            $output = json_encode($output);
+        } else {
+            $output = (string) $output;
+        }
+    }
+    
+    // Output the response as a string
+    echo $output;
+    
 } catch (Throwable $e) {
+    // Clean any output buffer on error
+    if (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+    
     error_log('Vercel API Error: ' . $e->getMessage());
     http_response_code(500);
     echo json_encode([
