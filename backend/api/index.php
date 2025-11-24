@@ -21,7 +21,7 @@ try {
             }
         }
     }
-    
+
     // Also update PATH_INFO if it exists and contains /api
     if (isset($_SERVER['PATH_INFO']) && strpos($_SERVER['PATH_INFO'], '/api') === 0) {
         $_SERVER['PATH_INFO'] = substr($_SERVER['PATH_INFO'], 4);
@@ -34,9 +34,6 @@ try {
 
     // Ensure the path exists
     $laravelIndex = __DIR__ . '/../public/index.php';
-    error_log("Vercel API Entry Point Hit");
-echo "Backend is alive";
-// require __DIR__ . '/../public/index.php';
     if (!file_exists($laravelIndex)) {
         http_response_code(500);
         echo json_encode(['error' => 'Laravel application not found']);
