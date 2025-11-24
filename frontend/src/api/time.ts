@@ -1,5 +1,6 @@
 import axios from '@/services/axios';
 import { TimeLog, TimeLogFilters, TimesheetSummary, TotalTimePerTask, ActiveTimer } from '@/types/time-tracker';
+import { buildQueryString } from '@/utils/queryParams';
 
 // Timer controls
 export const getActiveTimer = () =>
@@ -19,15 +20,9 @@ export const stopTimer = (timerId: string) =>
 
 // Time logs CRUD
 export const getTimeLogs = (filters?: TimeLogFilters) => {
-  const params = new URLSearchParams();
-  if (filters) {
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        params.append(key, String(value));
-      }
-    });
-  }
-  return axios.get<{ success: boolean; data: TimeLog[] }>(`/time?${params.toString()}`);
+  const queryString = buildQueryString(filters, '/time');
+  const url = queryString ? `/time?${queryString}` : '/time';
+  return axios.get<{ success: boolean; data: TimeLog[] }>(url);
 };
 
 export const createManualTimeEntry = (data: {
@@ -50,15 +45,9 @@ export const getTimeLog = (id: string) =>
 
 // Timesheet
 export const getTimesheet = (filters?: TimeLogFilters) => {
-  const params = new URLSearchParams();
-  if (filters) {
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        params.append(key, String(value));
-      }
-    });
-  }
-  return axios.get<{ success: boolean; data: { time_logs: TimeLog[]; total_minutes: number; total_hours: number; total_logs: number } }>(`/timesheet?${params.toString()}`);
+  const queryString = buildQueryString(filters, '/timesheet');
+  const url = queryString ? `/timesheet?${queryString}` : '/timesheet';
+  return axios.get<{ success: boolean; data: { time_logs: TimeLog[]; total_minutes: number; total_hours: number; total_logs: number } }>(url);
 };
 
 export const getTaskTimeLogs = (taskId: string) =>
@@ -110,17 +99,15 @@ export interface TimelineResponse {
 }
 
 export const getTimeline = (filters?: TimeLogFilters, page: number = 1, limit: number = 20) => {
-  const params = new URLSearchParams();
-  if (filters) {
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        params.append(key, String(value));
-      }
-    });
-  }
-  params.append('page', String(page));
-  params.append('per_page', String(limit));
-  return axios.get<{ success: boolean; data: TimelineResponse }>(`/time/timeline?${params.toString()}`);
+  // Build query params with filters, page, and per_page
+  const allParams = {
+    ...filters,
+    page: String(page),
+    per_page: String(limit),
+  };
+  const queryString = buildQueryString(allParams, '/time/timeline');
+  const url = queryString ? `/time/timeline?${queryString}` : '/time/timeline';
+  return axios.get<{ success: boolean; data: TimelineResponse }>(url);
 };
 
 // Approval
@@ -132,16 +119,14 @@ export const rejectTimeLog = (timeLogId: string, rejectionReason: string) =>
 
 // Export
 export const exportTimeLogs = (filters?: TimeLogFilters, format: 'csv' | 'xlsx' | 'pdf' = 'csv') => {
-  const params = new URLSearchParams();
-  params.append('format', format);
-  if (filters) {
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        params.append(key, String(value));
-      }
-    });
-  }
-  return axios.get(`/time/export?${params.toString()}`, {
+  // Build query params with format and filters
+  const allParams = {
+    format,
+    ...filters,
+  };
+  const queryString = buildQueryString(allParams, '/time/export');
+  const url = queryString ? `/time/export?${queryString}` : '/time/export';
+  return axios.get(url, {
     responseType: 'blob',
   });
 };

@@ -1,5 +1,6 @@
 import axios from '@/services/axios';
 import { TimeLog, TimeLogFilters, TimesheetSummary, TotalTimePerTask, ActiveTimer } from '@/types/time-tracker';
+import { buildQueryString } from '@/utils/queryParams';
 
 // Timer controls
 export const getActiveTimer = () =>
@@ -19,15 +20,9 @@ export const stopTimer = (timerId: string) =>
 
 // Time logs CRUD
 export const getTimeTrackers = (filters?: TimeLogFilters) => {
-  const params = new URLSearchParams();
-  if (filters) {
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        params.append(key, String(value));
-      }
-    });
-  }
-  return axios.get<{ data: TimeLog[] }>(`/time-tracker?${params.toString()}`);
+  const queryString = buildQueryString(filters, '/time-tracker');
+  const url = queryString ? `/time-tracker?${queryString}` : '/time-tracker';
+  return axios.get<{ data: TimeLog[] }>(url);
 };
 
 export const createManualTimeEntry = (data: {
@@ -50,15 +45,9 @@ export const getTimeTracker = (id: string) =>
 
 // Timesheet
 export const getTimesheet = (filters?: TimeLogFilters) => {
-  const params = new URLSearchParams();
-  if (filters) {
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        params.append(key, String(value));
-      }
-    });
-  }
-  return axios.get<{ success: boolean; data: { time_logs: TimeLog[]; total_minutes: number; total_hours: number; total_logs: number } }>(`/timesheet?${params.toString()}`);
+  const queryString = buildQueryString(filters, '/timesheet');
+  const url = queryString ? `/timesheet?${queryString}` : '/timesheet';
+  return axios.get<{ success: boolean; data: { time_logs: TimeLog[]; total_minutes: number; total_hours: number; total_logs: number } }>(url);
 };
 
 export const getTaskTimeLogs = (taskId: string) =>
@@ -73,16 +62,14 @@ export const rejectTimeLog = (timeLogId: string, rejectionReason: string) =>
 
 // Export
 export const exportTimeLogs = (filters?: TimeLogFilters, format: 'csv' | 'xlsx' | 'pdf' = 'csv') => {
-  const params = new URLSearchParams();
-  params.append('format', format);
-  if (filters) {
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        params.append(key, String(value));
-      }
-    });
-  }
-  return axios.get(`/time-tracker/export?${params.toString()}`, {
+  // Build query params with format and filters
+  const allParams = {
+    format,
+    ...filters,
+  };
+  const queryString = buildQueryString(allParams, '/time-tracker/export');
+  const url = queryString ? `/time-tracker/export?${queryString}` : '/time-tracker/export';
+  return axios.get(url, {
     responseType: 'blob',
   });
 };
