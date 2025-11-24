@@ -18,5 +18,36 @@
             "use": "@vercel/static-build",
             "config": {
                 "distDir": "dist"
-            ]
+            }
         }
+    ],
+    "routes": [
+        {
+            "src": "/api/(.*)",
+            "dest": "/backend/api/index.php"
+        },
+        {
+            "src": "/assets/(.*)",
+            "dest": "/frontend/assets/$1"
+        },
+        {
+            "src": "/logo.png",
+            "dest": "/frontend/logo.png"
+        },
+        {
+            "src": "/vite.svg",
+            "dest": "/frontend/vite.svg"
+        },
+        {
+            "src": "/manifest.json",
+            "dest": "/frontend/manifest.json"
+        },
+        {
+            "handle": "filesystem"
+        },
+        {
+            "src": "/(.*)",
+            "dest": "/frontend/index.html"
+        }
+    ]
+}
