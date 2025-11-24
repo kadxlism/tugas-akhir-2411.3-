@@ -3,7 +3,8 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "vite build",
+        "build": "vite build --outDir dist",
+        "build:local": "vite build --outDir ../backend/public/build",
         "dev": "vite",
         "test": "vitest",
         "test:ui": "vitest --ui",
