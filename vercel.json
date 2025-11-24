@@ -1,44 +1,32 @@
 {
     "version": 2,
+    "framework": "vite",
     "installCommand": "npm install --prefix frontend && composer install --working-dir=backend --no-dev --prefer-dist --optimize-autoloader",
-    "builds": [
-        {
-            "src": "backend/api/index.php",
-            "use": "vercel-php",
-            "config": {
-                "includeFiles": [
-                    "backend/**"
-                ]
-            }
-        },
-        {
-            "src": "frontend/package.json",
-            "use": "@vercel/static-build",
-            "config": {
-                "distDir": "dist"
-            }
+    "buildCommand": "cd frontend && npm run build",
+    "outputDirectory": "frontend/dist",
+    "functions": {
+        "backend/api/index.php": {
+            "runtime": "vercel-php@0.7.0",
+            "includeFiles": [
+                "backend/vendor/**",
+                "backend/bootstrap/**",
+                "backend/config/**",
+                "backend/storage/**",
+                "backend/resources/**",
+                "backend/routes/**",
+                "backend/app/**",
+                "backend/database/**",
+                "backend/public/**",
+                "backend/composer.json",
+                "backend/composer.lock",
+                "backend/.env"
+            ]
         }
-    ],
+    },
     "routes": [
         {
             "src": "/api/(.*)",
             "dest": "/backend/api/index.php"
-        },
-        {
-            "src": "/assets/(.*)",
-            "dest": "/assets/$1"
-        },
-        {
-            "src": "/logo.png",
-            "dest": "/logo.png"
-        },
-        {
-            "src": "/vite.svg",
-            "dest": "/vite.svg"
-        },
-        {
-            "src": "/manifest.json",
-            "dest": "/manifest.json"
         },
         {
             "handle": "filesystem"
