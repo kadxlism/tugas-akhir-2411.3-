@@ -7,20 +7,7 @@
     "functions": {
         "backend/api/index.php": {
             "runtime": "vercel-php@0.7.0",
-            "includeFiles": [
-                "backend/vendor/**",
-                "backend/bootstrap/**",
-                "backend/config/**",
-                "backend/storage/**",
-                "backend/resources/**",
-                "backend/routes/**",
-                "backend/app/**",
-                "backend/database/**",
-                "backend/public/**",
-                "backend/composer.json",
-                "backend/composer.lock",
-                "backend/.env"
-            ]
+            "includeFiles": "backend/**"
         }
     },
     "routes": [
@@ -30,26 +17,26 @@
         },
         {
             "src": "/assets/(.*)",
-            "dest": "/frontend/assets/$1"
+            "dest": "/assets/$1"
         },
         {
             "src": "/logo.png",
-            "dest": "/frontend/logo.png"
+            "dest": "/logo.png"
         },
         {
             "src": "/vite.svg",
-            "dest": "/frontend/vite.svg"
+            "dest": "/vite.svg"
         },
         {
             "src": "/manifest.json",
-            "dest": "/frontend/manifest.json"
+            "dest": "/manifest.json"
         },
         {
             "handle": "filesystem"
         },
         {
             "src": "/(.*)",
-            "dest": "/frontend/index.html"
+            "dest": "/index.html"
         }
     ]
 }
