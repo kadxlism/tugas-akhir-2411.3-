@@ -1,18 +1,13 @@
 {
     "version": 2,
-    "builds": [
-        {
-            "src": "backend/api/index.php",
-            "use": "vercel-php@0.7.0"
-        },
-        {
-            "src": "frontend/package.json",
-            "use": "@vercel/static-build",
-            "config": {
-                "distDir": "dist"
-            }
+    "framework": "vite",
+    "buildCommand": "cd frontend && npm install && npm run build",
+    "outputDirectory": "frontend/dist",
+    "functions": {
+        "backend/api/index.php": {
+            "runtime": "vercel-php@0.7.0"
         }
-    ],
+    },
     "routes": [
         {
             "src": "/api/(.*)",
