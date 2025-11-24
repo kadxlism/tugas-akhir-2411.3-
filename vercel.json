@@ -18,20 +18,5 @@
             "use": "@vercel/static-build",
             "config": {
                 "distDir": "dist"
-            }
+            ]
         }
-    ],
-    "routes": [
-        {
-            "src": "/api/(.*)",
-            "dest": "/backend/api/index.php"
-        },
-        {
-            "handle": "filesystem"
-        },
-        {
-            "src": "/(.*)",
-            "dest": "/frontend/index.html"
-        }
-    ]
-}
