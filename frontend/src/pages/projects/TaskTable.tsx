@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/useAuth";
 import { getTasks, createTask, updateTask, updateTaskStatus, PaginatedTasks } from "@/api/alltasks";
 import { useNotification } from "@/contexts/NotificationContext"; // ✅ notifikasi
 import TinyMCE from "@/components/TinyMCE";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const emptyForm = {
   title: "",
@@ -23,6 +24,7 @@ const TaskTable = () => {
   const { activeTimer, fetchActiveTimer, pauseTimer } = useTimeStore();
   const { user } = useAuth();
   const { addNotification } = useNotification(); // ✅ akses notifikasi
+  const { t } = useLanguage();
   const [assignees, setAssignees] = useState<any[]>([]);
   const [projects, setProjects] = useState<any[]>([]);
   const [profilePhotos, setProfilePhotos] = useState<Record<number, string>>({});
@@ -257,30 +259,30 @@ const TaskTable = () => {
     const current = new Set<number>();
     const newVersions = new Map<number, any>();
 
-    tasks.forEach(t => {
-      current.add(t.id);
+    tasks.forEach(task => {
+      current.add(task.id);
 
       // Cek task baru yang ditugaskan ke user
-      if (!knownTaskIds.has(t.id) && t.assigned_to === user.id) {
-        addNotification(`Tugas baru ditugaskan: "${t.title}" 📌`, '/tasks');
+      if (!knownTaskIds.has(task.id) && task.assigned_to === user.id) {
+        addNotification(`${t('notifications.newTaskAssigned')}: "${task.title}" 📌`, '/tasks');
       }
 
       // Cek update task yang sudah ada
-      const previousVersion = taskVersions.get(t.id);
-      if (previousVersion && t.assigned_to === user.id) {
+      const previousVersion = taskVersions.get(task.id);
+      if (previousVersion && task.assigned_to === user.id) {
         // Cek apakah ada perubahan yang signifikan
         const hasChanges =
-          previousVersion.title !== t.title ||
-          previousVersion.status !== t.status ||
-          previousVersion.description !== t.description ||
-          previousVersion.due_date !== t.due_date ||
-          previousVersion.priority !== t.priority;
+          previousVersion.title !== task.title ||
+          previousVersion.status !== task.status ||
+          previousVersion.description !== task.description ||
+          previousVersion.due_date !== task.due_date ||
+          previousVersion.priority !== task.priority;
 
         if (hasChanges) {
           let changeMessage = '';
-          if (previousVersion.title !== t.title) {
-            changeMessage = `Judul tugas diubah menjadi: "${t.title}"`;
-          } else if (previousVersion.status !== t.status) {
+          if (previousVersion.title !== task.title) {
+            changeMessage = `${t('notifications.taskTitleChanged')}: "${task.title}"`;
+          } else if (previousVersion.status !== task.status) {
             const statusMap: { [key: string]: string } = {
               'todo': 'Belum Dikerjakan',
               'in_progress': 'Sedang Dalam Proses',
@@ -288,21 +290,21 @@ const TaskTable = () => {
               'done': 'Selesai'
             };
             const oldStatus = statusMap[previousVersion.status] || previousVersion.status;
-            const newStatus = statusMap[t.status] || t.status;
-            changeMessage = `Status tugas berubah dari "${oldStatus}" menjadi "${newStatus}"`;
-          } else if (previousVersion.due_date !== t.due_date) {
-            changeMessage = `Tanggal deadline tugas diubah`;
-          } else if (previousVersion.priority !== t.priority) {
+            const newStatus = statusMap[task.status] || task.status;
+            changeMessage = `${t('notifications.taskStatusChanged')} "${oldStatus}" ${t('notifications.to')} "${newStatus}"`;
+          } else if (previousVersion.due_date !== task.due_date) {
+            changeMessage = t('notifications.taskDeadlineChanged');
+          } else if (previousVersion.priority !== task.priority) {
             const priorityMap: { [key: string]: string } = {
               'low': 'Rendah',
               'medium': 'Sedang',
               'high': 'Tinggi'
             };
             const oldPriority = priorityMap[previousVersion.priority || 'medium'] || previousVersion.priority;
-            const newPriority = priorityMap[t.priority || 'medium'] || t.priority;
-            changeMessage = `Prioritas tugas berubah dari "${oldPriority}" menjadi "${newPriority}"`;
+            const newPriority = priorityMap[task.priority || 'medium'] || task.priority;
+            changeMessage = `${t('notifications.taskPriorityChanged')} "${oldPriority}" ${t('notifications.to')} "${newPriority}"`;
           } else {
-            changeMessage = `Tugas "${t.title}" telah diperbarui`;
+            changeMessage = `${t('notifications.taskUpdated')}: "${task.title}"`;
           }
 
           addNotification(`${changeMessage} 🔄`, '/tasks');
@@ -312,25 +314,26 @@ const TaskTable = () => {
       // Cek jika task baru ditugaskan ke user (perubahan assignee)
       if (previousVersion &&
         previousVersion.assigned_to !== user.id &&
-        t.assigned_to === user.id) {
-        addNotification(`Anda ditugaskan untuk tugas: "${t.title}" 👤`, '/tasks');
+        task.assigned_to === user.id) {
+        addNotification(`${t('notifications.youAssignedToTask')}: "${task.title}" 👤`, '/tasks');
       }
 
       // Simpan versi task saat ini
-      newVersions.set(t.id, {
-        title: t.title,
-        status: t.status,
-        description: t.description,
-        due_date: t.due_date,
-        priority: t.priority,
-        assigned_to: t.assigned_to
+      newVersions.set(task.id, {
+        title: task.title,
+        status: task.status,
+        description: task.description,
+        due_date: task.due_date,
+        priority: task.priority,
+        assigned_to: task.assigned_to
       });
     });
 
     // Simpan data tracking ke localStorage
     saveKnownTaskIds(current);
     saveTaskVersions(newVersions);
-  }, [tasks, user, addNotification]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tasks, user, t]);
 
   // Notifikasi untuk admin - track semua task baru dan update
   useEffect(() => {
@@ -377,55 +380,55 @@ const TaskTable = () => {
     const current = new Set<number>();
     const newVersions = new Map<number, any>();
 
-    tasks.forEach(t => {
-      current.add(t.id);
+    tasks.forEach(task => {
+      current.add(task.id);
 
       // Cek task baru (admin perlu tahu semua task baru)
-      if (!knownTaskIds.has(t.id)) {
-        addNotification(`Tugas baru dibuat: "${t.title}" 📌`, '/tasks');
+      if (!knownTaskIds.has(task.id)) {
+        addNotification(`${t('notifications.taskCreatedNotification')}: "${task.title}" 📌`, '/tasks');
       }
 
       // Cek update task yang sudah ada
-      const previousVersion = taskVersions.get(t.id);
+      const previousVersion = taskVersions.get(task.id);
       if (previousVersion) {
         // Cek apakah ada perubahan yang signifikan
         const hasChanges =
-          previousVersion.title !== t.title ||
-          previousVersion.status !== t.status ||
-          previousVersion.description !== t.description ||
-          previousVersion.due_date !== t.due_date ||
-          previousVersion.priority !== t.priority ||
-          previousVersion.assigned_to !== t.assigned_to;
+          previousVersion.title !== task.title ||
+          previousVersion.status !== task.status ||
+          previousVersion.description !== task.description ||
+          previousVersion.due_date !== task.due_date ||
+          previousVersion.priority !== task.priority ||
+          previousVersion.assigned_to !== task.assigned_to;
 
         if (hasChanges) {
           let changeMessage = '';
-          if (previousVersion.title !== t.title) {
-            changeMessage = `Tugas "${previousVersion.title}" diubah menjadi: "${t.title}"`;
-          } else if (previousVersion.status !== t.status) {
+          if (previousVersion.title !== task.title) {
+            changeMessage = `${t('notifications.taskTitleChanged')}: "${task.title}"`;
+          } else if (previousVersion.status !== task.status) {
             const statusMap: { [key: string]: string } = {
-              'todo': 'Belum Dikerjakan',
-              'in_progress': 'Sedang Dalam Proses',
-              'review': 'Dalam Review',
-              'done': 'Selesai'
+              'todo': t('tasks.todo'),
+              'in_progress': t('dashboard.inProgress'),
+              'review': t('timeline.review'),
+              'done': t('dashboard.completed')
             };
             const oldStatus = statusMap[previousVersion.status] || previousVersion.status;
-            const newStatus = statusMap[t.status] || t.status;
-            changeMessage = `Status tugas "${t.title}" berubah dari "${oldStatus}" menjadi "${newStatus}"`;
-          } else if (previousVersion.due_date !== t.due_date) {
-            changeMessage = `Tanggal deadline tugas "${t.title}" diubah`;
-          } else if (previousVersion.priority !== t.priority) {
+            const newStatus = statusMap[task.status] || task.status;
+            changeMessage = `${t('notifications.taskStatusChanged')} "${task.title}" ${t('notifications.from')} "${oldStatus}" ${t('notifications.to')} "${newStatus}"`;
+          } else if (previousVersion.due_date !== task.due_date) {
+            changeMessage = `${t('notifications.taskDeadlineChanged')}: "${task.title}"`;
+          } else if (previousVersion.priority !== task.priority) {
             const priorityMap: { [key: string]: string } = {
-              'low': 'Rendah',
-              'medium': 'Sedang',
-              'high': 'Tinggi'
+              'low': t('tasks.priorityLow'),
+              'medium': t('tasks.priorityMedium'),
+              'high': t('tasks.priorityHigh')
             };
             const oldPriority = priorityMap[previousVersion.priority || 'medium'] || previousVersion.priority;
-            const newPriority = priorityMap[t.priority || 'medium'] || t.priority;
-            changeMessage = `Prioritas tugas "${t.title}" berubah dari "${oldPriority}" menjadi "${newPriority}"`;
-          } else if (previousVersion.assigned_to !== t.assigned_to) {
-            changeMessage = `Tugas "${t.title}" ditugaskan ke user lain`;
+            const newPriority = priorityMap[task.priority || 'medium'] || task.priority;
+            changeMessage = `${t('notifications.taskPriorityChanged')} "${task.title}" ${t('notifications.from')} "${oldPriority}" ${t('notifications.to')} "${newPriority}"`;
+          } else if (previousVersion.assigned_to !== task.assigned_to) {
+            changeMessage = `${t('notifications.taskUpdated')}: "${task.title}" (${t('tasks.assignedUser')})`;
           } else {
-            changeMessage = `Tugas "${t.title}" telah diperbarui`;
+            changeMessage = `${t('notifications.taskUpdated')}: "${task.title}"`;
           }
 
           addNotification(`${changeMessage} 🔄`, '/tasks');
@@ -433,20 +436,21 @@ const TaskTable = () => {
       }
 
       // Simpan versi task saat ini
-      newVersions.set(t.id, {
-        title: t.title,
-        status: t.status,
-        description: t.description,
-        due_date: t.due_date,
-        priority: t.priority,
-        assigned_to: t.assigned_to
+      newVersions.set(task.id, {
+        title: task.title,
+        status: task.status,
+        description: task.description,
+        due_date: task.due_date,
+        priority: task.priority,
+        assigned_to: task.assigned_to
       });
     });
 
     // Simpan data tracking ke localStorage
     saveAdminKnownTaskIds(current);
     saveAdminTaskVersions(newVersions);
-  }, [tasks, user, addNotification]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tasks, user, t]);
 
   const handleAdd = () => {
     setEditTask(null);
@@ -505,11 +509,11 @@ const TaskTable = () => {
   const markDone = async (task: any) => {
     try {
       await updateTaskStatus(task.id, 'done');
-      addNotification(`Tugas "${task.title}" ditandai selesai ✅`);
+      addNotification(`${t('dashboard.tasks')} "${task.title}" ${t('notifications.markedAsDone')} ✅`);
       // Reload current page
       await loadTasks(currentPage, searchTerm);
     } catch {
-      addNotification('Gagal mengubah status tugas');
+      addNotification(t('notifications.updateStatusFailed'));
     }
   };
 
@@ -524,10 +528,10 @@ const TaskTable = () => {
         const taskTitle = response.data.task_title || taskToDelete.title;
 
         // Show toast notification
-        showToastNotification(`Data tugas berhasil dihapus!`);
+        showToastNotification(`${t('notifications.taskDeletedSuccess')}!`);
 
         // Also add to notification list
-        addNotification(`Tugas "${taskTitle}" berhasil dihapus ✅`);
+        addNotification(`${t('notifications.taskDeletedSuccess')}: "${taskTitle}" ✅`);
 
         setShowDeleteConfirm(false);
         setTaskToDelete(null);
@@ -536,7 +540,7 @@ const TaskTable = () => {
         await loadTasks(currentPage, searchTerm);
       } catch (error) {
         console.error('Error deleting task:', error);
-        addNotification('Gagal menghapus tugas. Pastikan Anda memiliki izin untuk menghapus tugas ini.');
+        addNotification(`${t('notifications.deleteTaskFailed')}.`);
       }
     }
   };
@@ -551,7 +555,7 @@ const TaskTable = () => {
 
     // Validasi form
     if (!form.title.trim()) {
-      addNotification('Judul tugas harus diisi');
+      addNotification(t('notifications.taskTitleRequired'));
       return;
     }
 
@@ -588,10 +592,10 @@ const TaskTable = () => {
         await updateTask(editTask.id, updateData);
 
         // Show toast notification
-        showToastNotification(`Data tugas berhasil diperbarui!`);
+        showToastNotification(t('notifications.taskUpdatedSuccess'));
 
         // Notifikasi untuk admin bahwa task berhasil diupdate
-        addNotification(`Tugas "${form.title}" berhasil diperbarui ✅`, `/tasks`);
+        addNotification(`${t('notifications.taskUpdatedSuccess')} "${form.title}" ✅`, `/tasks`);
 
         // Reload current page
         await loadTasks(currentPage, searchTerm);
@@ -615,10 +619,10 @@ const TaskTable = () => {
         await createTask(createData);
 
         // Show toast notification
-        showToastNotification(`Data tugas berhasil dibuat!`);
+        showToastNotification(`${t('tasks.taskCreated')}!`);
 
         // Notifikasi untuk admin bahwa task berhasil dibuat
-        addNotification(`Tugas "${form.title}" berhasil dibuat ✅`, `/tasks`);
+        addNotification(`${t('tasks.taskCreated')}: "${form.title}" ✅`, `/tasks`);
 
         // Reload first page to show new task
         await loadTasks(1);
@@ -633,7 +637,7 @@ const TaskTable = () => {
 
     } catch (err) {
       console.error('Error saving task:', err);
-      addNotification('Gagal menyimpan tugas');
+      addNotification(t('notifications.saveTaskFailed'));
     }
   };
 
@@ -661,8 +665,8 @@ const TaskTable = () => {
               </svg>
             </div>
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Konfirmasi Hapus</h3>
-          <p className="text-gray-600 mb-6">Yakin ingin menghapus tugas "{taskToDelete.title}"?</p>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('tasks.deleteConfirm')}</h3>
+          <p className="text-gray-600 mb-6">{t('tasks.deleteConfirmDesc')} "{taskToDelete.title}"?</p>
           <div className="flex space-x-3 justify-center">
             <button
               onClick={cancelDelete}
@@ -674,7 +678,7 @@ const TaskTable = () => {
               onClick={confirmDelete}
               className="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-xl transition-colors"
             >
-              Hapus
+              {t('common.delete')}
             </button>
           </div>
         </div>
@@ -689,8 +693,8 @@ const TaskTable = () => {
             </svg>
           </div>
           <div>
-            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">Tabel Tugas</h2>
-            <p className="text-xs sm:text-sm lg:text-base text-gray-600 dark:text-gray-400 hidden sm:block">Kelola dan pantau semua tugas</p>
+            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">{t('tasks.title')}</h2>
+            <p className="text-xs sm:text-sm lg:text-base text-gray-600 dark:text-gray-400 hidden sm:block">{t('tasks.subtitle')}</p>
           </div>
         </div>
         {user && (user.role === 'admin' || (user as any).role === 'customer_service') && (
@@ -701,7 +705,7 @@ const TaskTable = () => {
             <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
             </svg>
-            <span>Tambahkan Tugas</span>
+            <span>{t('tasks.addTask')}</span>
           </button>
         )}
       </div>
@@ -717,7 +721,7 @@ const TaskTable = () => {
             </div>
             <input
               type="text"
-              placeholder="Cari tugas..."
+              placeholder={t('tasks.searchTasks')}
               value={searchInput}
               onChange={(e) => handleSearchInput(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
@@ -732,7 +736,7 @@ const TaskTable = () => {
               <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
-              <span className="hidden sm:inline">Cari</span>
+              <span className="hidden sm:inline">{t('common.search')}</span>
             </button>
             {searchTerm && (
               <button
@@ -742,14 +746,14 @@ const TaskTable = () => {
                 <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
-                <span className="hidden sm:inline">Hapus</span>
+                <span className="hidden sm:inline">{t('common.clear')}</span>
               </button>
             )}
           </div>
         </div>
         {searchTerm && (
           <div className="mt-2 text-sm text-gray-600">
-            Menampilkan hasil untuk: <span className="font-medium text-blue-600 dark:text-blue-400">"{searchTerm}"</span>
+            {t('tasks.searchResults')} <span className="font-medium text-blue-600 dark:text-blue-400">"{searchTerm}"</span>
           </div>
         )}
       </div>
@@ -759,7 +763,7 @@ const TaskTable = () => {
         {loading && (
           <div className="flex items-center justify-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <span className="ml-2 text-sm sm:text-base text-gray-600">Memuat tugas...</span>
+            <span className="ml-2 text-sm sm:text-base text-gray-600">{t('tasks.loading')}</span>
           </div>
         )}
         <div className="overflow-x-auto -mx-2 sm:mx-0">
@@ -768,19 +772,19 @@ const TaskTable = () => {
               <thead>
                 <tr className="bg-gradient-to-r from-blue-600 to-blue-700">
                   <th className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold text-white uppercase tracking-wider">
-                    Judul
+                    {t('tasks.taskName')}
                   </th>
                   <th className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold text-white uppercase tracking-wider hidden sm:table-cell">
-                    Kategori
+                    {t('tasks.category')}
                   </th>
                   <th className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold text-white uppercase tracking-wider hidden md:table-cell">
-                    Paket
+                    {t('tasks.package')}
                   </th>
                   <th className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold text-white uppercase tracking-wider hidden lg:table-cell">
-                    Pengguna yang Ditugaskan
+                    {t('tasks.assignedUser')}
                   </th>
                   <th className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-center text-xs sm:text-sm font-semibold text-white uppercase tracking-wider">
-                    Tindakan
+                    {t('tasks.actions')}
                   </th>
                 </tr>
               </thead>
@@ -794,8 +798,8 @@ const TaskTable = () => {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                           </svg>
                         </div>
-                        <p className="text-sm sm:text-base lg:text-lg text-gray-500">Belum ada tugas</p>
-                        <p className="text-xs sm:text-sm text-gray-400 px-4">Klik "Tambahkan Tugas" untuk membuat tugas pertama</p>
+                        <p className="text-sm sm:text-base lg:text-lg text-gray-500">{t('tasks.noTasks')}</p>
+                        <p className="text-xs sm:text-sm text-gray-400 px-4">{t('tasks.noTasksDesc')}</p>
                       </div>
                     </td>
                   </tr>

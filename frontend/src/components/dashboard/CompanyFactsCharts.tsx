@@ -11,6 +11,7 @@ import {
   Legend,
 } from "chart.js";
 import { Line } from "react-chartjs-2";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 ChartJS.register(
   CategoryScale,
@@ -29,6 +30,8 @@ type FactData = {
 };
 
 const CompanyFactsChart: FC<{ data: FactData }> = ({ data }) => {
+  const { t } = useLanguage();
+
   const chartData = {
     labels: data.month.split(" "), // kalau kamu kirim "Jan Feb Mar Apr"
     datasets: data.values.map((v) => ({
@@ -70,7 +73,7 @@ const CompanyFactsChart: FC<{ data: FactData }> = ({ data }) => {
           </svg>
         </div>
         <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
-          Company Facts
+          {t('dashboard.companyFacts')}
         </h3>
       </div>
       <Line data={chartData} options={options} />

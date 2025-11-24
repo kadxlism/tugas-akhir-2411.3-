@@ -1,4 +1,4 @@
-// src/components/dashboard/ProjectOverview.tsx
+import { useLanguage } from "@/contexts/LanguageContext";
 
 // ✅ Export type Project
 export type Project = {
@@ -13,11 +13,12 @@ export type Project = {
 
 // ✅ Komponen ProjectOverview (bisa kamu kembangkan sesuai kebutuhan)
 const ProjectOverview = () => {
+  const { t } = useLanguage();
   return (
     <div className="rounded-xl bg-white p-4 shadow">
-      <h2 className="text-lg text-black font-semibold">Project Overview</h2>
+      <h2 className="text-lg text-black font-semibold">{t('dashboard.projectOverview')}</h2>
       <p className="text-sm text-gray-500">
-        Ringkasan progress dan detail proyek akan ditampilkan di sini.
+        {t('dashboard.projectOverviewDesc')}
       </p>
     </div>
   );

@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import axios from '@/services/axios';
 import { TimelineActivity } from '@/api/time';
 import { useTimeline } from '@/hooks/useTimeline';
+import { useLanguage } from '@/contexts/LanguageContext';
 import TimelineFilters from '@/components/timeline/TimelineFilters';
 import { LiveTimer } from '@/components/timeline/LiveTimer';
 import TimelineEmpty from '@/components/timeline/TimelineEmpty';
@@ -25,6 +26,7 @@ const Timeline = () => {
     clearFilters,
     loadTimeline,
   } = useTimeline();
+  const { t } = useLanguage();
 
   const hasActiveFilters = Object.keys(filters).some(
     (key) => filters[key as keyof typeof filters] !== undefined && filters[key as keyof typeof filters] !== ''
@@ -33,23 +35,23 @@ const Timeline = () => {
   const getActivityTitle = (type: TimelineActivity['type']) => {
     switch (type) {
       case 'timer_started':
-        return 'Timer dimulai';
+        return t('timeline.timerStarted');
       case 'timer_paused':
-        return 'Timer dijeda';
+        return t('timeline.timerPaused');
       case 'timer_resumed':
-        return 'Timer dilanjutkan';
+        return t('timeline.timerResumed');
       case 'timer_stopped':
-        return 'Timer dihentikan';
+        return t('timeline.timerStopped');
       case 'manual_entry':
-        return 'Entri waktu manual';
+        return t('timeline.manualEntry');
       case 'approved':
-        return 'Time log disetujui';
+        return t('timeline.timeLogApproved');
       case 'rejected':
-        return 'Time log ditolak';
+        return t('timeline.timeLogRejected');
       case 'task_created':
-        return 'Tugas dibuat';
+        return t('timeline.taskCreated');
       default:
-        return 'Aktivitas';
+        return t('timeline.activity');
     }
   };
 
@@ -119,8 +121,8 @@ const Timeline = () => {
             {activity.note
               ? activity.note
               : activity.is_placeholder
-                ? 'Belum ada log waktu. Mulai timer dari halaman tugas untuk mencatat aktivitas.'
-                : 'Tidak ada catatan tambahan.'}
+                ? t('timeline.noLogPlaceholder')
+                : t('timeline.noNote')}
           </p>
         </div>
       </div>
@@ -138,7 +140,7 @@ const Timeline = () => {
       <p className="text-xs text-gray-500 dark:text-gray-400">
         User:{' '}
         <span className="font-medium text-gray-800 dark:text-gray-300">
-          {activity.user?.name || 'Belum ditugaskan'}
+          {activity.user?.name || t('timeline.notAssigned')}
         </span>
       </p>
     </div>
@@ -173,7 +175,7 @@ const Timeline = () => {
             ) : activity.duration_minutes > 0 || activity.task?.status === 'done' || activity.task?.status === 'in_progress' ? (
               `${formatDuration(activity.duration_minutes)}`
             ) : (
-              'Belum ada log'
+              t('timeline.noLog')
             )
           ) : !activity.end_time && !activity.is_paused && activity.start_time ? (
             <LiveTimer
@@ -182,11 +184,11 @@ const Timeline = () => {
               className="inline-flex"
             />
           ) : activity.status === 'approved' ? (
-            'Approved'
+            t('timeline.approved')
           ) : activity.status === 'rejected' ? (
-            'Rejected'
+            t('timeline.rejected')
           ) : (
-            'Pending'
+            t('dashboard.pending')
           )}
         </span>
         {activity.task?.status && (
@@ -196,19 +198,19 @@ const Timeline = () => {
             )}`}
           >
             {activity.task.status === 'todo'
-              ? 'Belum dikerjakan'
+              ? t('tasks.status.todo')
               : activity.task.status === 'in_progress'
-                ? 'Sedang dikerjakan'
+                ? t('dashboard.inProgress')
                 : activity.task.status === 'review'
-                  ? 'Review'
-                  : 'Selesai'}
+                  ? t('timeline.review')
+                  : t('dashboard.completed')}
           </span>
         )}
         {activity.task?.status === 'todo' && (
           <button
             onClick={() => activity.task?.id && handleStartTimer(activity.task.id)}
             className="p-1 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 transition-colors"
-            title="Mulai Timer"
+            title={t('timeline.startTimer')}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
@@ -219,7 +221,7 @@ const Timeline = () => {
       </div>
       {!activity.is_placeholder && (
         <p className="text-xs text-gray-500 dark:text-gray-400">
-          Durasi: <span className="font-semibold text-gray-800 dark:text-gray-300">{formatDuration(activity.duration_minutes)}</span>
+          {t('timeline.duration')}: <span className="font-semibold text-gray-800 dark:text-gray-300">{formatDuration(activity.duration_minutes)}</span>
         </p>
       )}
     </div>
@@ -261,10 +263,10 @@ const Timeline = () => {
           </div>
           <div>
             <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">
-              Time Tracker Timeline
+              {t('timeline.title')}
             </h2>
             <p className="text-xs sm:text-sm lg:text-base text-gray-600 dark:text-gray-400 hidden sm:block">
-              Kelola catatan waktu tugas dan aktivitas tim
+              {t('timeline.subtitle')}
             </p>
           </div>
         </div>
@@ -278,16 +280,16 @@ const Timeline = () => {
 
         {hasActiveFilters && (
           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-2xl px-4 py-3 text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-            <span className="font-semibold text-blue-700 dark:text-blue-400">Filter aktif:</span>{' '}
+            <span className="font-semibold text-blue-700 dark:text-blue-400">{t('timeline.filterActive')}:</span>{' '}
             {filters.user_id && `User ID: ${filters.user_id}, `}
             {filters.project_id && `Project ID: ${filters.project_id}, `}
             {filters.start_date && `Start: ${filters.start_date}, `}
             {filters.end_date && `End: ${filters.end_date}, `}
-            {filters.status && `Status Approval: ${filters.status === 'pending' ? 'Pending' : filters.status === 'approved' ? 'Approved' : 'Rejected'}, `}
-            {filters.task_status && `Status Tugas: ${filters.task_status === 'todo' ? 'Belum Dikerjakan' :
-              filters.task_status === 'in_progress' ? 'Sedang Dalam Proses' :
-                filters.task_status === 'review' ? 'Review' :
-                  filters.task_status === 'done' ? 'Selesai' :
+            {filters.status && `${t('timeline.statusApproval')}: ${filters.status === 'pending' ? t('dashboard.pending') : filters.status === 'approved' ? t('timeline.approved') : t('timeline.rejected')}, `}
+            {filters.task_status && `${t('dashboard.taskStatus')}: ${filters.task_status === 'todo' ? t('tasks.status.todo') :
+              filters.task_status === 'in_progress' ? t('dashboard.inProgress') :
+                filters.task_status === 'review' ? t('timeline.review') :
+                  filters.task_status === 'done' ? t('dashboard.completed') :
                     filters.task_status
               }`}
           </div>
@@ -308,7 +310,7 @@ const Timeline = () => {
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow p-4 border border-gray-100 dark:border-gray-700">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Activities</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">{t('timeline.totalActivities')}</p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white">
                       {activities.length}
                     </p>
@@ -334,7 +336,7 @@ const Timeline = () => {
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow p-4 border border-gray-100 dark:border-gray-700">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Pending</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">{t('dashboard.pending')}</p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white">
                       {activities.filter((a) => a.status === 'pending').length}
                     </p>
@@ -360,7 +362,7 @@ const Timeline = () => {
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow p-4 border border-gray-100 dark:border-gray-700">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Approved</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">{t('timeline.approved')}</p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white">
                       {activities.filter((a) => a.status === 'approved').length}
                     </p>
@@ -399,16 +401,16 @@ const Timeline = () => {
                   <thead className="bg-linear-to-r from-blue-600 to-blue-700">
                     <tr>
                       <th className="px-4 sm:px-6 lg:px-8 py-4 text-left text-xs sm:text-sm font-semibold text-white uppercase tracking-wider">
-                        Aktivitas
+                        {t('timeline.activity')}
                       </th>
                       <th className="px-4 sm:px-6 lg:px-8 py-4 text-left text-xs sm:text-sm font-semibold text-white uppercase tracking-wider">
-                        Task & Project
+                        {t('timeline.taskAndProject')}
                       </th>
                       <th className="px-4 sm:px-6 lg:px-8 py-4 text-left text-xs sm:text-sm font-semibold text-white uppercase tracking-wider">
-                        Status
+                        {t('common.status')}
                       </th>
                       <th className="px-4 sm:px-6 lg:px-8 py-4 text-left text-xs sm:text-sm font-semibold text-white uppercase tracking-wider">
-                        Waktu
+                        {t('common.time')}
                       </th>
                     </tr>
                   </thead>
@@ -420,13 +422,13 @@ const Timeline = () => {
                           {hasActiveFilters && (
                             <div className="mt-4">
                               <p className="text-sm text-gray-600">
-                                Tidak ada aktivitas yang sesuai dengan filter yang dipilih.
+                                {t('timeline.noActivitiesFiltered')}
                               </p>
                               <button
                                 onClick={clearFilters}
                                 className="text-sm text-blue-600 hover:text-blue-800 underline mt-2"
                               >
-                                Hapus semua filter untuk melihat semua aktivitas
+                                {t('timeline.clearFilters')}
                               </button>
                             </div>
                           )}
@@ -458,7 +460,7 @@ const Timeline = () => {
             {activities.length > 0 && (
               <div className="px-4 sm:px-6 lg:px-8 py-4 border-t border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                  Menampilkan {((currentPage - 1) * 5) + 1} sampai {Math.min(currentPage * 5, totalItems)} dari {totalItems} aktivitas
+                  {t('timeline.showing')} {((currentPage - 1) * 5) + 1} {t('timeline.to')} {Math.min(currentPage * 5, totalItems)} {t('timeline.of')} {totalItems} {t('timeline.activities')}
                 </p>
                 {totalPages > 1 && (
                   <div className="flex items-center space-x-1 sm:space-x-2">
@@ -467,7 +469,7 @@ const Timeline = () => {
                       disabled={currentPage === 1 || isLoading}
                       className="px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <span className="hidden sm:inline">Sebelumnya</span>
+                      <span className="hidden sm:inline">{t('common.previous')}</span>
                       <span className="sm:hidden">Prev</span>
                     </button>
                     <div className="flex items-center space-x-1 overflow-x-auto">
@@ -511,7 +513,7 @@ const Timeline = () => {
                       disabled={currentPage === totalPages || isLoading}
                       className="px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <span className="hidden sm:inline">Selanjutnya</span>
+                      <span className="hidden sm:inline">{t('common.next')}</span>
                       <span className="sm:hidden">Next</span>
                     </button>
                   </div>

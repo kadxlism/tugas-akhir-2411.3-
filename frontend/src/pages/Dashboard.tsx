@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useAuth } from "@/contexts/useAuth";
 import { useAppData } from "@/contexts/AppDataContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 import { Doughnut } from "react-chartjs-2";
 
@@ -25,11 +26,12 @@ interface Stats {
 const Dashboard = () => {
   const { clients, projects, tasks } = useAppData();
   const { user } = useAuth() as any;
+  const { t } = useLanguage();
 
 
   const chartData = useMemo(
     () => ({
-      labels: ["Clients", "Projects", "Tasks"],
+      labels: [t('dashboard.clients'), t('dashboard.projects'), t('dashboard.tasks')],
       datasets: [
         {
           data: [clients.length, projects.length, tasks.length],
@@ -39,7 +41,7 @@ const Dashboard = () => {
         },
       ],
     }),
-    [clients, projects, tasks]
+    [clients, projects, tasks, t]
   );
 
   const companyFacts = {
@@ -96,9 +98,9 @@ const Dashboard = () => {
               </div>
               <div>
                 <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">
-                  Dashboard Overview
+                  {t('dashboard.title')}
                 </h2>
-                <p className="text-xs sm:text-sm lg:text-base text-gray-600 dark:text-gray-400 hidden sm:block">Ringkasan lengkap data sistem Anda</p>
+                <p className="text-xs sm:text-sm lg:text-base text-gray-600 dark:text-gray-400 hidden sm:block">{t('dashboard.welcome')}</p>
               </div>
             </div>
           </div>
@@ -129,7 +131,7 @@ const Dashboard = () => {
                     </svg>
                   </div>
                   <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
-                    Project Overview
+                    {t('dashboard.projectOverview')}
                   </h3>
                 </div>
                 <div className="max-w-xs mx-auto">

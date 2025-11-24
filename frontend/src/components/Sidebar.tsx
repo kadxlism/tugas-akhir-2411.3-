@@ -1,11 +1,13 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/useAuth";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useState, useEffect } from "react";
 
 const Sidebar = () => {
   const { theme } = useTheme();
   const { user, logout } = useAuth() as any;
+  const { t } = useLanguage();
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -13,73 +15,46 @@ const Sidebar = () => {
 
   // Load profile photo on mount and when user changes
   useEffect(() => {
-    if (!user) {
-      setProfilePhoto(null);
-      return;
-    }
+    const loadProfilePhoto = () => {
+      if (!user) {
+        setProfilePhoto(null);
+        return;
+      }
 
-    // Try to get user ID from different possible fields
-    const userId = user.id || (user as any).user_id || (user as any)._id || String(user.email) || 'default';
+      // Try to get user ID from different possible fields
+      const userId = user.id || (user as any).user_id || (user as any)._id || String(user.email) || 'default';
 
-    if (userId) {
-      const storageKey = `profile_photo_${userId}`;
-      const storedPhoto = localStorage.getItem(storageKey);
+      if (userId) {
+        const storageKey = `profile_photo_${userId}`;
+        const storedPhoto = localStorage.getItem(storageKey);
 
-      if (storedPhoto) {
-        setProfilePhoto(storedPhoto);
+        if (storedPhoto) {
+          setProfilePhoto(storedPhoto);
+        } else {
+          setProfilePhoto(null);
+        }
       } else {
-        // Clear photo if no stored photo found
         setProfilePhoto(null);
       }
-    } else {
-      setProfilePhoto(null);
-    }
-  }, [user]);
-
-  // Listen for profile photo updates
-  useEffect(() => {
-    if (!user) return;
-
-    // Try to get user ID from different possible fields
-    const userId = user.id || (user as any).user_id || (user as any)._id || String(user.email) || 'default';
-
-    if (!userId) {
-      return;
-    }
-
-    const storageKey = `profile_photo_${userId}`;
-
-    const handleProfilePhotoUpdate = (event?: CustomEvent) => {
-      // Small delay to ensure localStorage is updated
-      setTimeout(() => {
-        const storedPhoto = localStorage.getItem(storageKey);
-        setProfilePhoto(storedPhoto);
-      }, 100);
     };
 
-    // Listen for storage changes (when photo is updated in another tab)
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === storageKey) {
-        handleProfilePhotoUpdate();
+    loadProfilePhoto();
+
+    // Listen for profile photo updates from Settings page
+    const handleProfilePhotoUpdate = (event: CustomEvent) => {
+      const { userId, photo } = event.detail;
+      // Check if the update is for the current user
+      const currentUserId = user?.id || (user as any)?.user_id || (user as any)?._id || String(user?.email) || 'default';
+
+      if (String(userId) === String(currentUserId)) {
+        setProfilePhoto(photo);
       }
     };
 
-    window.addEventListener('storage', handleStorageChange);
-
-    // Listen for custom event (for same-tab updates)
-    const customEventHandler = (event: Event) => {
-      const customEvent = event as CustomEvent;
-      // Check if event is for this user or if no userId is specified (global update)
-      if (!customEvent.detail || !customEvent.detail.userId || customEvent.detail.userId === userId) {
-        handleProfilePhotoUpdate(customEvent);
-      }
-    };
-
-    window.addEventListener('profilePhotoUpdated', customEventHandler);
+    window.addEventListener('profilePhotoUpdated', handleProfilePhotoUpdate as EventListener);
 
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('profilePhotoUpdated', customEventHandler);
+      window.removeEventListener('profilePhotoUpdated', handleProfilePhotoUpdate as EventListener);
     };
   }, [user]);
 
@@ -91,7 +66,7 @@ const Sidebar = () => {
 
   return (
     <>
-      {/* Mobile Menu Button */}
+      {/* ... (keep mobile menu button and overlay) */}
       <button
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         className="fixed top-4 left-4 z-50 lg:hidden p-2 bg-blue-600 dark:bg-gray-800 text-white rounded-lg shadow-lg hover:bg-blue-700 dark:hover:bg-gray-700 transition-colors"
@@ -106,7 +81,6 @@ const Sidebar = () => {
         </svg>
       </button>
 
-      {/* Mobile Overlay */}
       {isMobileMenuOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
@@ -114,8 +88,7 @@ const Sidebar = () => {
         />
       )}
 
-      {/* Sidebar */}
-      <aside className={`fixed top-0 left-0 w-72 h-screen transition-all duration-300 z-40 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+      <aside className={`fixed top-0 left-0 w-72 h-screen transition-all duration-300 z-50 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         } bg-gradient-to-b from-blue-900 via-blue-700 to-blue-900 shadow-2xl border-r border-white/10`}>
         {/* Header */}
         <div className="p-4 lg:p-6 border-b border-white/10">
@@ -127,8 +100,8 @@ const Sidebar = () => {
                 </svg>
               </div>
               <div>
-                <h2 className="text-lg lg:text-xl font-bold text-white">Project Manager</h2>
-                <p className="text-xs text-gray-400 hidden lg:block">Management System</p>
+                <h2 className="text-lg lg:text-xl font-bold text-white">{t('sidebar.projectManager')}</h2>
+                <p className="text-xs text-gray-400 hidden lg:block">{t('sidebar.managementSystem')}</p>
               </div>
             </div>
             {/* Close button for mobile */}
@@ -157,7 +130,7 @@ const Sidebar = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5a2 2 0 012-2h4a2 2 0 012 2v6H8V5z" />
               </svg>
             </div>
-            <span className="text-sm lg:text-base text-white font-medium group-hover:text-yellow-300 transition-colors">Dasbor</span>
+            <span className="text-sm lg:text-base text-white font-medium group-hover:text-yellow-300 transition-colors">{t('sidebar.dashboard')}</span>
           </Link>
 
           {user?.role === 'admin' && (
@@ -171,7 +144,7 @@ const Sidebar = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
               </div>
-              <span className="text-sm lg:text-base text-white font-medium group-hover:text-yellow-300 transition-colors">Klien</span>
+              <span className="text-sm lg:text-base text-white font-medium group-hover:text-yellow-300 transition-colors">{t('sidebar.clients')}</span>
             </Link>
           )}
 
@@ -185,7 +158,7 @@ const Sidebar = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
               </svg>
             </div>
-            <span className="text-sm lg:text-base text-white font-medium group-hover:text-yellow-300 transition-colors">Tugas</span>
+            <span className="text-sm lg:text-base text-white font-medium group-hover:text-yellow-300 transition-colors">{t('sidebar.tasks')}</span>
           </Link>
 
           {user?.role === 'admin' && (
@@ -199,7 +172,7 @@ const Sidebar = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <span className="text-sm lg:text-base text-white font-medium group-hover:text-yellow-300 transition-colors">Garis Waktu</span>
+              <span className="text-sm lg:text-base text-white font-medium group-hover:text-yellow-300 transition-colors">{t('sidebar.timeline')}</span>
             </Link>
           )}
 
@@ -217,7 +190,7 @@ const Sidebar = () => {
                 </svg>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-sm lg:text-base text-white font-medium group-hover:text-yellow-300 transition-colors">Pengguna</span>
+                <span className="text-sm lg:text-base text-white font-medium group-hover:text-yellow-300 transition-colors">{t('sidebar.users')}</span>
               </div>
             </Link>
           )}
@@ -233,7 +206,7 @@ const Sidebar = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
             </div>
-            <span className="text-sm lg:text-base text-white font-medium group-hover:text-yellow-300 transition-colors">Pengaturan</span>
+            <span className="text-sm lg:text-base text-white font-medium group-hover:text-yellow-300 transition-colors">{t('sidebar.settings')}</span>
           </Link>
         </nav>
 
@@ -259,12 +232,12 @@ const Sidebar = () => {
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs lg:text-sm font-medium text-white truncate">{user?.name || 'User'}</p>
-              <p className="text-[10px] lg:text-xs text-gray-400 truncate">{user?.role === 'admin' ? 'Administrator' : user?.role === 'customer_service' ? 'Customer Service' : 'User'}</p>
+              <p className="text-xs lg:text-sm font-medium text-white truncate">{user?.name || t('users.roleUser')}</p>
+              <p className="text-[10px] lg:text-xs text-gray-400 truncate">{user?.role === 'admin' ? t('users.administrator') : user?.role === 'customer_service' ? t('users.customerService') : t('users.roleUser')}</p>
             </div>
             <div className="text-right">
               <span className="inline-flex items-center text-[10px] lg:text-xs font-semibold text-red-100 bg-red-500/20 border border-red-500/40 px-2 py-0.5 rounded-full">
-                Keluar
+                {t('auth.logout')}
               </span>
             </div>
           </button>
@@ -283,8 +256,8 @@ const Sidebar = () => {
                 </svg>
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Keluar Aplikasi?</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Anda akan keluar dari akun saat ini.</p>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t('auth.logout')}?</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{t('auth.logoutConfirm')}</p>
               </div>
             </div>
             <div className="space-y-3">
@@ -295,13 +268,13 @@ const Sidebar = () => {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                 </svg>
-                Ya, Keluar
+                {t('common.confirm')}
               </button>
               <button
                 onClick={() => setShowLogoutModal(false)}
                 className="w-full inline-flex items-center justify-center px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-200"
               >
-                Batal
+                {t('common.cancel')}
               </button>
             </div>
           </div>

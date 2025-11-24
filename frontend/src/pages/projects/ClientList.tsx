@@ -6,11 +6,13 @@ import { getClients, PaginatedClients } from "@/api/clients";
 import { useNotification } from "@/contexts/NotificationContext";
 import { useAuth } from "@/contexts/useAuth";
 import TinyMCE from "@/components/TinyMCE";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const ClientList = () => {
   const { clients, setClients } = useAppData();
   const { user } = useAuth();
   const { addNotification } = useNotification();
+  const { t } = useLanguage();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editClient, setEditClient] = useState<Client | null>(null);
   const [showToast, setShowToast] = useState(false);
@@ -199,7 +201,7 @@ const ClientList = () => {
 
       // Cek client baru (admin perlu tahu semua client baru)
       if (!knownClientIds.has(c.id)) {
-        addNotification(`Klien baru ditambahkan: "${c.company_name}" 📌`, '/clients');
+        addNotification(`${t('clients.clientCreated')}: "${c.company_name}" 📌`, '/clients');
       }
 
       // Cek update client yang sudah ada
@@ -218,21 +220,21 @@ const ClientList = () => {
         if (hasChanges) {
           let changeMessage = '';
           if (previousVersion.company_name !== c.company_name) {
-            changeMessage = `Nama perusahaan klien diubah dari "${previousVersion.company_name}" menjadi "${c.company_name}"`;
+            changeMessage = `${t('clients.companyName')} ${t('notifications.from')} "${previousVersion.company_name}" ${t('notifications.to')} "${c.company_name}"`;
           } else if (previousVersion.owner !== c.owner) {
-            changeMessage = `Pemilik klien "${c.company_name}" diubah dari "${previousVersion.owner}" menjadi "${c.owner}"`;
+            changeMessage = `${t('clients.owner')} ${t('clients.title')} "${c.company_name}" ${t('notifications.from')} "${previousVersion.owner}" ${t('notifications.to')} "${c.owner}"`;
           } else if (previousVersion.phone !== c.phone) {
-            changeMessage = `Nomor telepon klien "${c.company_name}" diubah`;
+            changeMessage = `${t('clients.phone')} ${t('clients.title')} "${c.company_name}" ${t('notifications.taskUpdated')}`;
           } else if (previousVersion.package !== c.package) {
-            changeMessage = `Paket klien "${c.company_name}" diubah dari "${previousVersion.package}" menjadi "${c.package}"`;
+            changeMessage = `${t('clients.package')} ${t('clients.title')} "${c.company_name}" ${t('notifications.from')} "${previousVersion.package}" ${t('notifications.to')} "${c.package}"`;
           } else if (previousVersion.deadline !== c.deadline) {
-            changeMessage = `Tenggat waktu klien "${c.company_name}" diubah`;
+            changeMessage = `${t('clients.deadline')} ${t('clients.title')} "${c.company_name}" ${t('notifications.taskUpdated')}`;
           } else if (previousVersion.dp !== c.dp) {
-            changeMessage = `Status pembayaran klien "${c.company_name}" diubah dari "${previousVersion.dp}" menjadi "${c.dp}"`;
+            changeMessage = `${t('clients.paymentStatus')} ${t('clients.title')} "${c.company_name}" ${t('notifications.from')} "${previousVersion.dp}" ${t('notifications.to')} "${c.dp}"`;
           } else if (previousVersion.category !== c.category) {
-            changeMessage = `Kategori klien "${c.company_name}" diubah dari "${previousVersion.category || 'Tidak ada'}" menjadi "${c.category || 'Tidak ada'}"`;
+            changeMessage = `${t('clients.category')} ${t('clients.title')} "${c.company_name}" ${t('notifications.from')} "${previousVersion.category || 'Tidak ada'}" ${t('notifications.to')} "${c.category || 'Tidak ada'}"`;
           } else {
-            changeMessage = `Data klien "${c.company_name}" telah diperbarui`;
+            changeMessage = `${t('clients.clientUpdated')}: "${c.company_name}"`;
           }
 
           addNotification(`${changeMessage} 🔄`, '/clients');
@@ -291,7 +293,7 @@ const ClientList = () => {
     if (clientToDelete) {
       try {
         await axios.delete(`/clients/${clientToDelete.id}`);
-        showToastNotification("Data klien berhasil dihapus!");
+        showToastNotification(`${t('clients.clientDeleted')}!`);
         // Reload current page
         await loadClients(currentPage);
       } catch (error) {
@@ -352,14 +354,14 @@ const ClientList = () => {
       });
 
       showToastNotification(
-        `Project dan tugas awal berhasil dibuat untuk ${selectedClientForProject.company_name}!`
+        `${t('clients.projectCreated')} ${selectedClientForProject.company_name}!`
       );
       setShowCreateProjectModal(false);
       setSelectedClientForProject(null);
       setProjectForm({ name: '', description: '', start_date: '', end_date: '', assigned_to: undefined });
     } catch (error: any) {
       console.error('Error creating project:', error);
-      alert(error.response?.data?.message || 'Gagal membuat project');
+      alert(error.response?.data?.message || t('common.error'));
     }
   };
 
@@ -370,7 +372,7 @@ const ClientList = () => {
     today.setHours(0, 0, 0, 0); // Reset time untuk perbandingan yang akurat
 
     if (deadline < today) {
-      alert("⚠️ Tanggal deadline tidak boleh sebelum hari ini!");
+      alert(t('clients.deadlineError'));
       return false;
     }
     return true;
@@ -387,12 +389,12 @@ const ClientList = () => {
     try {
       if (editClient) {
         await axios.put(`/clients/${editClient.id}`, form);
-        showToastNotification("Data klien berhasil diperbarui!");
+        showToastNotification(`${t('clients.clientUpdated')}!`);
         // Reload current page
         await loadClients(currentPage);
       } else {
         await axios.post("/clients", form);
-        showToastNotification("Data klien berhasil tersimpan!");
+        showToastNotification(`${t('clients.clientCreated')}!`);
         // Reload first page to show new client
         await loadClients(1);
       }
@@ -437,12 +439,12 @@ const ClientList = () => {
             dp: row.dp || "",
           });
         }
-        showToastNotification("Data klien berhasil diimpor!");
+        showToastNotification(t('clients.importSuccess'));
         // Reload halaman pertama
         await loadClients(1);
       } catch (error) {
         console.error('Error importing clients:', error);
-        showToastNotification("Error saat mengimpor data!");
+        showToastNotification(t('clients.importError'));
       }
     };
     reader.readAsArrayBuffer(file);
@@ -469,7 +471,7 @@ const ClientList = () => {
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                  Buat Project untuk {selectedClientForProject.company_name}
+                  {t('clients.createProjectFor')} {selectedClientForProject.company_name}
                 </h3>
                 <button
                   onClick={() => {
@@ -488,7 +490,7 @@ const ClientList = () => {
               <form onSubmit={handleSubmitProject} className="space-y-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                    Nama Project
+                    {t('clients.projectName')}
                   </label>
                   <input
                     type="text"
@@ -501,7 +503,7 @@ const ClientList = () => {
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                    Deskripsi
+                    {t('clients.description')}
                   </label>
                   <TinyMCE
                     value={projectForm.description}
@@ -512,7 +514,7 @@ const ClientList = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                      Tanggal Mulai
+                      {t('clients.startDate')}
                     </label>
                     <input
                       type="date"
@@ -524,7 +526,7 @@ const ClientList = () => {
 
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                      Tanggal Selesai
+                      {t('clients.endDate')}
                     </label>
                     <input
                       type="date"
@@ -537,7 +539,7 @@ const ClientList = () => {
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                    User yang Ditugaskan (Opsional)
+                    {t('clients.assignedUserOptional')}
                   </label>
                   <select
                     value={projectForm.assigned_to || ''}
@@ -549,7 +551,7 @@ const ClientList = () => {
                     }
                     className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl text-black dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="">Tanpa user khusus</option>
+                    <option value="">{t('clients.noSpecificUser')}</option>
                     {assignees.map((u) => (
                       <option key={u.id} value={u.id}>
                         {u.name} ({u.email})
@@ -574,7 +576,7 @@ const ClientList = () => {
                     type="submit"
                     className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all"
                   >
-                    Buat Project
+                    {t('clients.createProject')}
                   </button>
                 </div>
               </form>
@@ -593,8 +595,8 @@ const ClientList = () => {
               </svg>
             </div>
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Konfirmasi Hapus</h3>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">Yakin ingin menghapus klien "{clientToDelete.company_name}"?</p>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">{t('clients.deleteConfirm')}</h3>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">{t('clients.deleteConfirmDesc')} "{clientToDelete.company_name}"?</p>
           <div className="flex space-x-3 justify-center">
             <button
               onClick={cancelDelete}
@@ -606,7 +608,7 @@ const ClientList = () => {
               onClick={confirmDelete}
               className="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-xl transition-colors"
             >
-              Hapus
+              {t('common.delete')}
             </button>
           </div>
         </div>
@@ -621,8 +623,8 @@ const ClientList = () => {
             </svg>
           </div>
           <div>
-            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">Klien</h2>
-            <p className="text-xs sm:text-sm lg:text-base text-gray-600 dark:text-gray-400 hidden sm:block">Kelola data klien dan informasi pembayaran</p>
+            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">{t('clients.title')}</h2>
+            <p className="text-xs sm:text-sm lg:text-base text-gray-600 dark:text-gray-400 hidden sm:block">{t('clients.subtitle')}</p>
           </div>
         </div>
         <button
@@ -632,7 +634,7 @@ const ClientList = () => {
           <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
           </svg>
-          <span>Tambahkan Klien</span>
+          <span>{t('clients.addClient')}</span>
         </button>
       </div>
 
@@ -647,7 +649,7 @@ const ClientList = () => {
             </div>
             <input
               type="text"
-              placeholder="Cari klien..."
+              placeholder={t('clients.searchClients')}
               value={searchInput}
               onChange={(e) => handleSearchInput(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
@@ -662,7 +664,7 @@ const ClientList = () => {
               <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
-              <span className="hidden sm:inline">Cari</span>
+              <span className="hidden sm:inline">{t('common.search')}</span>
             </button>
             {searchTerm && (
               <button
@@ -672,14 +674,14 @@ const ClientList = () => {
                 <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
-                <span className="hidden sm:inline">Hapus</span>
+                <span className="hidden sm:inline">{t('common.clear')}</span>
               </button>
             )}
           </div>
         </div>
         {searchTerm && (
           <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            Menampilkan hasil untuk: <span className="font-medium text-blue-600 dark:text-blue-400">"{searchTerm}"</span>
+            {t('clients.searchResults')} <span className="font-medium text-blue-600 dark:text-blue-400">"{searchTerm}"</span>
           </div>
         )}
       </div>
@@ -692,28 +694,28 @@ const ClientList = () => {
               <thead>
                 <tr className="bg-gradient-to-r from-blue-600 to-blue-700">
                   <th className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold text-white uppercase tracking-wider">
-                    Perusahaan
+                    {t('clients.companyName')}
                   </th>
                   <th className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold text-white uppercase tracking-wider hidden sm:table-cell">
-                    Pemilik
+                    {t('clients.owner')}
                   </th>
                   <th className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold text-white uppercase tracking-wider hidden md:table-cell">
-                    Telepon
+                    {t('clients.phone')}
                   </th>
                   <th className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold text-white uppercase tracking-wider hidden lg:table-cell">
-                    Paket
+                    {t('clients.package')}
                   </th>
                   <th className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold text-white uppercase tracking-wider hidden lg:table-cell">
-                    Tenggat Waktu
+                    {t('clients.deadline')}
                   </th>
                   <th className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold text-white uppercase tracking-wider hidden md:table-cell">
-                    Status Pembayaran
+                    {t('clients.paymentStatus')}
                   </th>
                   <th className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold text-white uppercase tracking-wider hidden xl:table-cell">
-                    Kategori
+                    {t('clients.category')}
                   </th>
                   <th className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-center text-xs sm:text-sm font-semibold text-white uppercase tracking-wider">
-                    Tindakan
+                    {t('clients.actions')}
                   </th>
                 </tr>
               </thead>
@@ -723,7 +725,7 @@ const ClientList = () => {
                     <td colSpan={8} className="px-4 sm:px-6 py-8 sm:py-12 text-center">
                       <div className="flex flex-col items-center space-y-3">
                         <div className="w-6 h-6 sm:w-8 sm:h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Memuat data klien...</p>
+                        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{t('clients.loading')}</p>
                       </div>
                     </td>
                   </tr>
@@ -736,8 +738,8 @@ const ClientList = () => {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                           </svg>
                         </div>
-                        <p className="text-sm sm:text-base lg:text-lg text-gray-500 dark:text-gray-400">Belum ada klien</p>
-                        <p className="text-xs sm:text-sm text-gray-400 dark:text-gray-500 px-4">Klik "Tambahkan Klien" untuk menambah klien pertama</p>
+                        <p className="text-sm sm:text-base lg:text-lg text-gray-500 dark:text-gray-400">{t('clients.noClients')}</p>
+                        <p className="text-xs sm:text-sm text-gray-400 dark:text-gray-500 px-4">{t('clients.noClientsDesc')}</p>
                       </div>
                     </td>
                   </tr>

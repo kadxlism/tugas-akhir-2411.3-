@@ -1,6 +1,7 @@
 import { FC } from "react";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 import { Doughnut } from "react-chartjs-2";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -11,8 +12,10 @@ type ProjectStats = {
 };
 
 const StatisticsChart: FC<{ stats: ProjectStats }> = ({ stats }) => {
+  const { t } = useLanguage();
+
   const data = {
-    labels: ["Completed", "Active", "Ended"],
+    labels: [t('dashboard.completed'), t('dashboard.active'), t('dashboard.ended')],
     datasets: [
       {
         data: [stats.completed, stats.active, stats.ended],
@@ -40,7 +43,7 @@ const StatisticsChart: FC<{ stats: ProjectStats }> = ({ stats }) => {
           </svg>
         </div>
         <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
-          Statistics
+          {t('dashboard.statistics')}
         </h3>
       </div>
       <div className="max-w-xs mx-auto">

@@ -4,11 +4,13 @@ import ManualTimeEntry from '@/components/time-tracker/ManualTimeEntry';
 import Timesheet from '@/components/time-tracker/Timesheet';
 import TimeLogApproval from '@/components/time-tracker/TimeLogApproval';
 import { getTasks } from '@/api/alltasks';
-import { getTotalTimePerTask } from '@/api/time-tracker';
+import { getTaskTimeLogs } from '@/api/time-tracker';
 import { useAuth } from '@/contexts/useAuth';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function TimeTrackerPage() {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<'timer' | 'manual' | 'timesheet' | 'approval'>('timer');
   const [tasks, setTasks] = useState<any[]>([]);
   const [selectedTaskId, setSelectedTaskId] = useState<number | undefined>();
@@ -37,8 +39,13 @@ export default function TimeTrackerPage() {
   const loadTaskTotalTime = async () => {
     if (!selectedTaskId) return;
     try {
-      const response = await getTotalTimePerTask(selectedTaskId);
-      setTaskTotalTime(response.data);
+      const response = await getTaskTimeLogs(selectedTaskId.toString());
+      const { total_minutes, total_hours } = response.data.data;
+      setTaskTotalTime({
+        formatted: `${Math.floor(total_minutes / 60)}h ${total_minutes % 60}m`,
+        hours: total_hours,
+        minutes: total_minutes
+      });
     } catch (error) {
       console.error('Error loading task total time:', error);
     }
@@ -57,15 +64,15 @@ export default function TimeTrackerPage() {
             </svg>
           </div>
           <div>
-            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">Time Tracker</h2>
-            <p className="text-xs sm:text-sm lg:text-base text-gray-600 dark:text-gray-400 hidden sm:block">Kelola catatan waktu tugas dan aktivitas</p>
+            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">{t('timeTracker.title')}</h2>
+            <p className="text-xs sm:text-sm lg:text-base text-gray-600 dark:text-gray-400 hidden sm:block">{t('timeTracker.subtitle')}</p>
           </div>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="mb-4 border-b border-gray-200 dark:border-gray-700">
-        <nav className="flex space-x-8">
+      <div className="mb-4 border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
+        <nav className="flex space-x-8 min-w-max">
           <button
             onClick={() => setActiveTab('timer')}
             className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'timer'
@@ -73,7 +80,7 @@ export default function TimeTrackerPage() {
               : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
               }`}
           >
-            Timer
+            {t('timeTracker.timer')}
           </button>
           <button
             onClick={() => setActiveTab('manual')}
@@ -82,7 +89,7 @@ export default function TimeTrackerPage() {
               : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
               }`}
           >
-            Manual Entry
+            {t('timeTracker.manualEntry')}
           </button>
           <button
             onClick={() => setActiveTab('timesheet')}
@@ -91,7 +98,7 @@ export default function TimeTrackerPage() {
               : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
               }`}
           >
-            Timesheet
+            {t('timeTracker.timesheet')}
           </button>
           {isAdminOrPM && (
             <button
@@ -101,7 +108,7 @@ export default function TimeTrackerPage() {
                 : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
                 }`}
             >
-              Approval
+              {t('timeTracker.approval')}
             </button>
           )}
         </nav>
@@ -111,13 +118,13 @@ export default function TimeTrackerPage() {
         activeTab === 'timer' && (
           <div className="space-y-6">
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border border-gray-100 dark:border-gray-700">
-              <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">Select Task</h2>
+              <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">{t('timeTracker.selectTask')}</h2>
               <select
                 value={selectedTaskId || ''}
                 onChange={(e) => setSelectedTaskId(e.target.value ? parseInt(e.target.value) : undefined)}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               >
-                <option value="">Select a task (In Progress only)</option>
+                <option value="">{t('timeTracker.selectTaskInProgress')}</option>
                 {tasks.map((task) => (
                   <option key={task.id} value={task.id}>
                     {task.title} - {task.project?.name || 'N/A'}
@@ -128,10 +135,10 @@ export default function TimeTrackerPage() {
 
             {selectedTaskId && taskTotalTime && (
               <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                <h3 className="font-semibold text-blue-900 dark:text-blue-300 mb-2">Total Time for This Task</h3>
+                <h3 className="font-semibold text-blue-900 dark:text-blue-300 mb-2">{t('timeTracker.totalTimeForTask')}</h3>
                 <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{taskTotalTime.formatted}</p>
                 <p className="text-sm text-blue-700 dark:text-blue-300">
-                  ({taskTotalTime.hours} hours, {taskTotalTime.minutes} minutes)
+                  ({taskTotalTime.hours} {t('timeline.hours')}, {taskTotalTime.minutes} {t('timeline.minutes')})
                 </p>
               </div>
             )}

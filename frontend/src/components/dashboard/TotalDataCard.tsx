@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { getDashboardStatistics, DashboardStatistics } from "@/api/dashboard";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 type FilterType = "all" | "day" | "month" | "year";
 
@@ -8,6 +9,7 @@ const TotalDataCard: React.FC = () => {
   const [statistics, setStatistics] = useState<DashboardStatistics | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { t } = useLanguage();
 
   useEffect(() => {
     let isMounted = true;
@@ -68,8 +70,8 @@ const TotalDataCard: React.FC = () => {
           </svg>
         </div>
         <div>
-          <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">Jumlah Data</h3>
-          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Total data dalam sistem</p>
+          <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">{t('dashboard.totalData')}</h3>
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{t('dashboard.totalDataDesc')}</p>
         </div>
       </div>
       <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 mb-4 sm:mb-6">
@@ -84,12 +86,12 @@ const TotalDataCard: React.FC = () => {
                 }`}
             >
               {f === "all"
-                ? "Semua"
+                ? t('common.all')
                 : f === "day"
-                  ? "Hari ini"
+                  ? t('common.today')
                   : f === "month"
-                    ? "Bulan ini"
-                    : "Tahun ini"}
+                    ? t('common.thisMonth')
+                    : t('common.thisYear')}
             </button>
           ))}
         </div>
@@ -103,7 +105,7 @@ const TotalDataCard: React.FC = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
             </div>
-            <span className="text-sm sm:text-base text-gray-700 dark:text-gray-300 font-medium">Klien</span>
+            <span className="text-sm sm:text-base text-gray-700 dark:text-gray-300 font-medium">{t('dashboard.clients')}</span>
           </div>
           <span className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
             {filteredData.clients}
@@ -116,7 +118,7 @@ const TotalDataCard: React.FC = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
               </svg>
             </div>
-            <span className="text-sm sm:text-base text-gray-700 dark:text-gray-300 font-medium">Proyek</span>
+            <span className="text-sm sm:text-base text-gray-700 dark:text-gray-300 font-medium">{t('dashboard.projects')}</span>
           </div>
           <span className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-400 dark:to-teal-400 bg-clip-text text-transparent">
             {filteredData.projects}
@@ -129,7 +131,7 @@ const TotalDataCard: React.FC = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
               </svg>
             </div>
-            <span className="text-sm sm:text-base text-gray-700 dark:text-gray-300 font-medium">Tugas</span>
+            <span className="text-sm sm:text-base text-gray-700 dark:text-gray-300 font-medium">{t('dashboard.tasks')}</span>
           </div>
           <span className="text-xl sm:text-2xl font-bold bg-yellow-600 dark:bg-yellow-400 bg-clip-text text-transparent">
             {filteredData.tasks}

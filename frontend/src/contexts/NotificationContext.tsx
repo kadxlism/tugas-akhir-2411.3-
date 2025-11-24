@@ -9,11 +9,19 @@ type Notification = {
   path?: string;
 };
 
+type ToastNotification = {
+  id: number;
+  message: string;
+  onClick?: () => void;
+};
+
 type NotificationContextType = {
   notifications: Notification[];
+  toasts: ToastNotification[];
   addNotification: (message: string, path?: string) => void;
   markAsRead: (id: number) => void;
   markAllAsRead: () => void;
+  removeToast: (id: number) => void;
 };
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
@@ -27,6 +35,7 @@ export const useNotification = () => {
 export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [toasts, setToasts] = useState<ToastNotification[]>([]);
   const getStorageKey = () => (user ? `notifications_user_${user.id}` : 'notifications');
 
   // Load persisted notifications saat user berubah / pertama kali
@@ -59,18 +68,35 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
       const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
       const recentNotifications = prev.filter(n => n.id > fiveMinutesAgo);
 
-      // Cek duplikasi berdasarkan message
-      const isDuplicate = recentNotifications.some(n => n.message === message);
+      // Cek duplikasi berdasarkan message dan path
+      const isDuplicate = recentNotifications.some(n =>
+        n.message === message && n.path === path
+      );
 
       if (isDuplicate) {
         return prev; // Jangan tambahkan notifikasi duplikat
       }
 
-      return [
-        ...prev,
-        { id: Date.now(), message, read: false, path },
-      ];
+      // Generate unique ID dengan random component untuk menghindari collision
+      const uniqueId = Date.now() + Math.random();
+      const newNotif = { id: uniqueId, message, read: false, path };
+
+      // Show toast for new notification (without onClick to prevent page reload)
+      setToasts((prevToasts) => [
+        ...prevToasts,
+        {
+          id: uniqueId,
+          message,
+          // Removed onClick to prevent page reload that triggers notifications again
+        }
+      ]);
+
+      return [...prev, newNotif];
     });
+  };
+
+  const removeToast = (id: number) => {
+    setToasts((prev) => prev.filter(t => t.id !== id));
   };
 
   const markAsRead = (id: number) => {
@@ -111,7 +137,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   return (
-    <NotificationContext.Provider value={{ notifications, addNotification, markAsRead, markAllAsRead }}>
+    <NotificationContext.Provider value={{ notifications, toasts, addNotification, markAsRead, markAllAsRead, removeToast }}>
       {children}
     </NotificationContext.Provider>
   );

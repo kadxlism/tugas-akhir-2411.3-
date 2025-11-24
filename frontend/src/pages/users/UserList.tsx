@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import axios from '@/services/axios';
 import { useNavigate } from 'react-router-dom';
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface User {
   id: number;
@@ -11,6 +12,7 @@ interface User {
 }
 
 const UserList = () => {
+  const { t } = useLanguage();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -67,7 +69,7 @@ const UserList = () => {
       const res = await axios.get('/admin/users');
       setUsers(res.data);
     } catch (err: any) {
-      setError('Gagal memuat data user');
+      setError(t('users.loadFailed'));
       console.error('Error fetching users:', err);
     } finally {
       setLoading(false);
@@ -75,12 +77,12 @@ const UserList = () => {
   };
 
   const deleteUser = async (id: number) => {
-    if (!confirm('Yakin hapus user ini?')) return;
+    if (!confirm(t('users.deleteConfirm'))) return;
     try {
       await axios.delete(`/admin/users/${id}`);
       fetchUsers();
     } catch (err: any) {
-      alert('Gagal menghapus user');
+      alert(t('users.deleteFailed'));
       console.error('Error deleting user:', err);
     }
   };
@@ -115,10 +117,10 @@ const UserList = () => {
 
   const getRoleLabel = (role: string) => {
     switch (role) {
-      case 'admin': return 'Admin';
-      case 'designer': return 'Designer';
-      case 'copywriter': return 'Copywriter';
-      case 'web_designer': return 'Web Designer';
+      case 'admin': return t('users.admin');
+      case 'designer': return t('users.designer');
+      case 'copywriter': return t('users.copywriter');
+      case 'web_designer': return t('users.web_designer');
       default: return role;
     }
   };
@@ -127,7 +129,7 @@ const UserList = () => {
     return (
       <div className="flex items-center justify-center py-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <span className="ml-2 text-sm sm:text-base text-gray-600">Memuat data user...</span>
+        <span className="ml-2 text-sm sm:text-base text-gray-600">{t('users.loading')}</span>
       </div>
     );
   }
@@ -142,7 +144,7 @@ const UserList = () => {
           onClick={fetchUsers}
           className="mt-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-5 py-2.5 rounded-xl hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200"
         >
-          Coba Lagi
+          {t('users.retry')}
         </button>
       </div>
     );
@@ -159,8 +161,8 @@ const UserList = () => {
             </svg>
           </div>
           <div>
-            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">Manajemen User</h2>
-            <p className="text-xs sm:text-sm lg:text-base text-gray-600 dark:text-gray-400 hidden sm:block">Kelola akun dan peran anggota tim</p>
+            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">{t('users.title')}</h2>
+            <p className="text-xs sm:text-sm lg:text-base text-gray-600 dark:text-gray-400 hidden sm:block">{t('users.subtitle')}</p>
           </div>
         </div>
         <button
@@ -170,7 +172,7 @@ const UserList = () => {
           <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
           </svg>
-          <span>Tambah User</span>
+          <span>{t('users.addUser')}</span>
         </button>
       </div>
 
@@ -185,7 +187,7 @@ const UserList = () => {
             </div>
             <input
               type="text"
-              placeholder="Cari berdasarkan nama atau email..."
+              placeholder={t('users.searchPlaceholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-9 sm:pl-10 pr-3 sm:pr-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 bg-white dark:bg-gray-800"
@@ -197,11 +199,11 @@ const UserList = () => {
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value)}
             >
-              <option value="">Semua Role</option>
-              <option value="admin">Admin</option>
-              <option value="designer">Designer</option>
-              <option value="copywriter">Copywriter</option>
-              <option value="web_designer">Web Designer</option>
+              <option value="">{t('users.allRoles')}</option>
+              <option value="admin">{t('users.admin')}</option>
+              <option value="designer">{t('users.designer')}</option>
+              <option value="copywriter">{t('users.copywriter')}</option>
+              <option value="web_designer">{t('users.web_designer')}</option>
             </select>
           </div>
         </div>
@@ -215,16 +217,16 @@ const UserList = () => {
               <thead>
                 <tr className="bg-gradient-to-r from-blue-600 to-blue-700">
                   <th className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold text-white uppercase tracking-wider">
-                    User
+                    {t('users.user')}
                   </th>
                   <th className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold text-white uppercase tracking-wider hidden sm:table-cell">
-                    Role
+                    {t('users.userRole')}
                   </th>
                   <th className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold text-white uppercase tracking-wider hidden md:table-cell">
-                    Tanggal Dibuat
+                    {t('users.dateCreated')}
                   </th>
                   <th className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-right text-xs sm:text-sm font-semibold text-white uppercase tracking-wider">
-                    Aksi
+                    {t('users.actions')}
                   </th>
                 </tr>
               </thead>
@@ -239,7 +241,7 @@ const UserList = () => {
                           </svg>
                         </div>
                         <p className="text-sm sm:text-base lg:text-lg text-gray-500">
-                          {searchTerm || roleFilter ? 'Tidak ada user yang sesuai dengan filter' : 'Belum ada user'}
+                          {searchTerm || roleFilter ? t('users.noUsersFiltered') : t('users.noUsers')}
                         </p>
                       </div>
                     </td>
@@ -321,7 +323,7 @@ const UserList = () => {
         {/* Summary */}
         <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
           <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 text-center sm:text-left">
-            Menampilkan <span className="font-medium text-gray-900 dark:text-white">{filteredUsers.length}</span> dari <span className="font-medium text-gray-900 dark:text-white">{Array.isArray(users) ? users.length : 0}</span> user
+            {t('users.showing')} <span className="font-medium text-gray-900 dark:text-white">{filteredUsers.length}</span> {t('users.from')} <span className="font-medium text-gray-900 dark:text-white">{Array.isArray(users) ? users.length : 0}</span> {t('users.user').toLowerCase()}
           </div>
         </div>
       </div>

@@ -3,6 +3,7 @@ import { TimeLogFilters } from '@/types/time-tracker';
 import { getUsers } from '@/api/users';
 import { getProjects } from '@/api/projectApi';
 import axios from '@/services/axios';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface TimelineFiltersProps {
   filters: TimeLogFilters;
@@ -26,6 +27,7 @@ const TimelineFilters = ({
   onFiltersChange,
   onClearFilters,
 }: TimelineFiltersProps) => {
+  const { t } = useLanguage();
   const [users, setUsers] = useState<User[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
@@ -79,23 +81,23 @@ const TimelineFilters = ({
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6 border border-gray-100 dark:border-gray-700">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Filters</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{t('timesheet.filters')}</h2>
           <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-            Filter bersifat opsional. Kosongkan semua untuk melihat semua aktivitas.
+            {t('timeline.filterOptional')}
           </p>
         </div>
         <button
           onClick={onClearFilters}
           className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline"
         >
-          Clear All
+          {t('common.clear')}
         </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-900 dark:text-gray-300 mb-1">
-            User
+            {t('users.user')}
           </label>
           <select
             value={filters.user_id || ''}
@@ -103,7 +105,7 @@ const TimelineFilters = ({
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white bg-white dark:bg-gray-700"
             disabled={loadingUsers}
           >
-            <option value="">All Users</option>
+            <option value="">{t('timeline.allUsers')}</option>
             {users.map((user) => (
               <option key={user.id} value={user.id}>
                 {user.name} ({user.email})
@@ -114,7 +116,7 @@ const TimelineFilters = ({
 
         <div>
           <label className="block text-sm font-medium text-gray-900 dark:text-gray-300 mb-1">
-            Project
+            {t('tasks.project')}
           </label>
           <select
             value={filters.project_id || ''}
@@ -122,7 +124,7 @@ const TimelineFilters = ({
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white bg-white dark:bg-gray-700"
             disabled={loadingProjects}
           >
-            <option value="">All Projects</option>
+            <option value="">{t('timeline.allProjects')}</option>
             {projects.map((project) => (
               <option key={project.id} value={project.id}>
                 {project.name}
@@ -133,42 +135,42 @@ const TimelineFilters = ({
 
         <div>
           <label className="block text-sm font-medium text-gray-900 dark:text-gray-300 mb-1">
-            Status Approval
+            {t('timeline.statusApproval')}
           </label>
           <select
             value={filters.status || ''}
             onChange={(e) => handleFilterChange('status', e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white bg-white dark:bg-gray-700"
           >
-            <option value="">All Status</option>
-            <option value="pending">Pending (Menunggu Approval)</option>
-            <option value="approved">Approved (Disetujui)</option>
-            <option value="rejected">Rejected (Ditolak)</option>
+            <option value="">{t('timeline.allStatus')}</option>
+            <option value="pending">{t('timeline.statusPendingDesc')}</option>
+            <option value="approved">{t('timeline.statusApprovedDesc')}</option>
+            <option value="rejected">{t('timeline.statusRejectedDesc')}</option>
           </select>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Status approval time log</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t('timeline.statusApprovalDesc')}</p>
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-900 dark:text-gray-300 mb-1">
-            Status Tugas
+            {t('dashboard.taskStatus')}
           </label>
           <select
             value={filters.task_status || ''}
             onChange={(e) => handleFilterChange('task_status', e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white bg-white dark:bg-gray-700"
           >
-            <option value="">All Status</option>
-            <option value="todo">Belum Dikerjakan</option>
-            <option value="in_progress">Sedang Dalam Proses</option>
-            <option value="review">Review</option>
-            <option value="done">Selesai</option>
+            <option value="">{t('timeline.allStatus')}</option>
+            <option value="todo">{t('tasks.todo')}</option>
+            <option value="in_progress">{t('dashboard.inProgress')}</option>
+            <option value="review">{t('timeline.review')}</option>
+            <option value="done">{t('dashboard.completed')}</option>
           </select>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Status tugas</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t('timeline.taskStatusDesc')}</p>
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-900 dark:text-gray-300 mb-1">
-            Start Date
+            {t('timeline.startDate')}
           </label>
           <input
             type="date"
@@ -180,7 +182,7 @@ const TimelineFilters = ({
 
         <div>
           <label className="block text-sm font-medium text-gray-900 dark:text-gray-300 mb-1">
-            End Date
+            {t('timeline.endDate')}
           </label>
           <input
             type="date"

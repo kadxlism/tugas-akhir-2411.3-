@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import axios from '@/services/axios';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const UserForm = () => {
+  const { t } = useLanguage();
   const { id } = useParams();
   const navigate = useNavigate();
   const [name, setName] = useState('');
@@ -53,7 +55,7 @@ const UserForm = () => {
       if (err.response?.status === 422) {
         setErrors(err.response.data.errors || {});
       } else {
-        setErrors({ general: 'Terjadi kesalahan saat menyimpan data' });
+        setErrors({ general: t('users.saveError') });
       }
     } finally {
       setLoading(false);
@@ -63,7 +65,7 @@ const UserForm = () => {
   if (loading && id) {
     return (
       <div className="p-4">
-        <div className="text-center text-gray-700">Loading...</div>
+        <div className="text-center text-gray-700">{t('common.loading')}</div>
       </div>
     );
   }
@@ -80,10 +82,10 @@ const UserForm = () => {
             </div>
             <div>
               <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
-                {id ? 'Edit User' : 'Tambah User Baru'}
+                {id ? t('users.editUser') : t('users.addNewUser')}
               </h1>
               <p className="text-xs sm:text-sm text-gray-600">
-                {id ? 'Perbarui informasi akun user' : 'Buat akun baru untuk anggota tim'}
+                {id ? t('users.editUserDesc') : t('users.addNewUserDesc')}
               </p>
             </div>
           </div>
@@ -98,16 +100,15 @@ const UserForm = () => {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Nama Lengkap
+              {t('users.fullName')}
             </label>
             <input
               type="text"
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500 ${
-                errors.name ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500 ${errors.name ? 'border-red-500' : 'border-gray-300'
+                }`}
               value={name}
               onChange={e => setName(e.target.value)}
-              placeholder="Masukkan nama lengkap"
+              placeholder={t('users.enterFullName')}
               required
             />
             {errors.name && (
@@ -117,16 +118,15 @@ const UserForm = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email
+              {t('common.email')}
             </label>
             <input
               type="email"
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500 ${
-                errors.email ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500 ${errors.email ? 'border-red-500' : 'border-gray-300'
+                }`}
               value={email}
               onChange={e => setEmail(e.target.value)}
-              placeholder="Masukkan email"
+              placeholder={t('users.enterEmail')}
               required
             />
             {errors.email && (
@@ -136,19 +136,18 @@ const UserForm = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Role
+              {t('common.role')}
             </label>
             <select
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 ${
-                errors.role ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 ${errors.role ? 'border-red-500' : 'border-gray-300'
+                }`}
               value={role}
               onChange={e => setRole(e.target.value)}
             >
-              <option value="admin">Admin</option>
-              <option value="designer">Designer</option>
-              <option value="copywriter">Copywriter</option>
-              <option value="web_designer">Web Designer</option>
+              <option value="admin">{t('users.admin')}</option>
+              <option value="designer">{t('users.designer')}</option>
+              <option value="copywriter">{t('users.copywriter')}</option>
+              <option value="web_designer">{t('users.web_designer')}</option>
             </select>
             {errors.role && (
               <p className="mt-1 text-sm text-red-600">{errors.role}</p>
@@ -157,16 +156,15 @@ const UserForm = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Password {id && <span className="text-gray-500">(kosongkan jika tidak ingin mengubah)</span>}
+              {t('common.password')} {id && <span className="text-gray-500">{t('users.passwordHint')}</span>}
             </label>
             <input
               type="password"
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500 ${
-                errors.password ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500 ${errors.password ? 'border-red-500' : 'border-gray-300'
+                }`}
               value={password}
               onChange={e => setPassword(e.target.value)}
-              placeholder={id ? 'Password baru (opsional)' : 'Masukkan password'}
+              placeholder={id ? t('users.newPasswordOptional') : t('users.enterPassword')}
               required={!id}
             />
             {errors.password && (
@@ -180,14 +178,14 @@ const UserForm = () => {
               disabled={loading}
               className="flex-1 bg-linear-to-r from-blue-500 to-blue-600 text-white py-2.5 px-4 rounded-xl hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
             >
-              {loading ? 'Menyimpan...' : (id ? 'Update User' : 'Simpan User')}
+              {loading ? t('users.saving') : (id ? t('users.updateUser') : t('users.saveUser'))}
             </button>
             <button
               type="button"
               onClick={() => navigate('/users')}
               className="flex-1 bg-gray-100 text-gray-700 py-2.5 px-4 rounded-xl hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-400 transition-colors duration-200"
             >
-              Batal
+              {t('common.cancel')}
             </button>
           </div>
         </form>

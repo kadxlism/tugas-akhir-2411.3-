@@ -29,7 +29,11 @@ const EditEmailForm = ({ currentEmail, onSuccess }: EditEmailFormProps) => {
                 setError(response.message || 'Gagal memperbarui email');
             }
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Terjadi kesalahan');
+            if (err.response?.status === 422 && err.response?.data?.errors?.email) {
+                setError(err.response.data.errors.email[0]);
+            } else {
+                setError(err.response?.data?.message || 'Terjadi kesalahan');
+            }
         } finally {
             setLoading(false);
         }

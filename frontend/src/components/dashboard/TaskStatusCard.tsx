@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { getDashboardStatistics, DashboardStatistics } from "@/api/dashboard";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 type FilterType = "all" | "day" | "month" | "year";
 
@@ -7,6 +8,7 @@ const TaskStatusCard: React.FC = () => {
   const [filter, setFilter] = useState<FilterType>("all");
   const [statistics, setStatistics] = useState<DashboardStatistics | null>(null);
   const [loading, setLoading] = useState(false);
+  const { t } = useLanguage();
 
   useEffect(() => {
     let isMounted = true;
@@ -61,8 +63,8 @@ const TaskStatusCard: React.FC = () => {
           </svg>
         </div>
         <div>
-          <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">Status Tugas</h3>
-          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Progress dan status tugas</p>
+          <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">{t('dashboard.taskStatus')}</h3>
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{t('dashboard.taskStatusDesc')}</p>
         </div>
       </div>
       <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 mb-4 sm:mb-6">
@@ -72,17 +74,17 @@ const TaskStatusCard: React.FC = () => {
               key={f}
               onClick={() => setFilter(f)}
               className={`px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm rounded-xl transition-all duration-200 ${filter === f
-                  ? "bg-blue-600 text-white shadow-lg shadow-blue-500/25"
-                  : "bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300"
+                ? "bg-blue-600 text-white shadow-lg shadow-blue-500/25"
+                : "bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300"
                 }`}
             >
               {f === "all"
-                ? "Semua"
+                ? t('common.all')
                 : f === "day"
-                  ? "Hari ini"
+                  ? t('common.today')
                   : f === "month"
-                    ? "Bulan ini"
-                    : "Tahun ini"}
+                    ? t('common.thisMonth')
+                    : t('common.thisYear')}
             </button>
           ))}
         </div>
@@ -96,7 +98,7 @@ const TaskStatusCard: React.FC = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
-            <span className="text-sm sm:text-base text-gray-700 dark:text-gray-300 font-medium">Aktif</span>
+            <span className="text-sm sm:text-base text-gray-700 dark:text-gray-300 font-medium">{t('dashboard.active')}</span>
           </div>
           <span className="text-xl sm:text-2xl font-bold bg-blue-600 bg-clip-text text-transparent">
             {activeCount}
@@ -109,7 +111,7 @@ const TaskStatusCard: React.FC = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <span className="text-sm sm:text-base text-gray-700 dark:text-gray-300 font-medium">Selesai</span>
+            <span className="text-sm sm:text-base text-gray-700 dark:text-gray-300 font-medium">{t('dashboard.completed')}</span>
           </div>
           <span className="text-xl sm:text-2xl font-bold bg-green-600 bg-clip-text text-transparent">
             {completedCount}
@@ -122,7 +124,7 @@ const TaskStatusCard: React.FC = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <span className="text-sm sm:text-base text-gray-700 dark:text-gray-300 font-medium">Terlambat</span>
+            <span className="text-sm sm:text-base text-gray-700 dark:text-gray-300 font-medium">{t('dashboard.overdue')}</span>
           </div>
           <span className="text-xl sm:text-2xl font-bold bg-red-600 bg-clip-text text-transparent">
             {overdueCount}

@@ -5,7 +5,10 @@ import { getTasks } from '@/api/alltasks';
 import { getTaskTimeLogs } from '@/api/time';
 import { TimeLog } from '@/types/time-tracker';
 
+import { useLanguage } from '@/contexts/LanguageContext';
+
 export default function TaskDetail() {
+  const { t } = useLanguage();
   const { taskId } = useParams<{ taskId: string }>();
   const { activeTimer, fetchActiveTimer, startTimer, pauseTimer, resumeTimer, stopTimer, isLoading, error } = useTimeStore();
   const [task, setTask] = useState<any>(null);
@@ -23,7 +26,7 @@ export default function TaskDetail() {
   }, [taskId]);
 
   useEffect(() => {
-    if (activeTimer && activeTimer.task_id === taskId && !activeTimer.is_paused) {
+    if (activeTimer && activeTimer.task_id === Number(taskId) && !activeTimer.is_paused) {
       const interval = setInterval(() => {
         if (activeTimer.current_duration_minutes) {
           setElapsed(activeTimer.current_duration_minutes * 60);
@@ -81,7 +84,7 @@ export default function TaskDetail() {
       setNote('');
       await loadTimeLogs();
     } catch (error: any) {
-      alert(error.response?.data?.message || 'Failed to start timer');
+      alert(error.response?.data?.message || t('taskDetail.startFailed'));
     }
   };
 
@@ -90,7 +93,7 @@ export default function TaskDetail() {
     try {
       await pauseTimer(activeTimer.id);
     } catch (error: any) {
-      alert(error.response?.data?.message || 'Failed to pause timer');
+      alert(error.response?.data?.message || t('taskDetail.pauseFailed'));
     }
   };
 
@@ -99,29 +102,29 @@ export default function TaskDetail() {
     try {
       await resumeTimer(activeTimer.id);
     } catch (error: any) {
-      alert(error.response?.data?.message || 'Failed to resume timer');
+      alert(error.response?.data?.message || t('taskDetail.resumeFailed'));
     }
   };
 
   const handleStop = async () => {
     if (!activeTimer) return;
-    if (!confirm('Are you sure you want to stop the timer?')) return;
+    if (!confirm(t('taskDetail.stopConfirm'))) return;
     try {
       await stopTimer(activeTimer.id);
       setElapsed(0);
       await loadTimeLogs();
     } catch (error: any) {
-      alert(error.response?.data?.message || 'Failed to stop timer');
+      alert(error.response?.data?.message || t('taskDetail.stopFailed'));
     }
   };
 
-  const isTaskTimerActive = activeTimer && activeTimer.task_id === taskId;
+  const isTaskTimerActive = activeTimer && activeTimer.task_id === Number(taskId);
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2">{task?.title || 'Task Detail'}</h1>
-        <p className="text-gray-600">Status: <span className="font-semibold">{task?.status}</span></p>
+        <h1 className="text-3xl font-bold mb-2">{task?.title || t('taskDetail.title')}</h1>
+        <p className="text-gray-600">{t('common.status')}: <span className="font-semibold">{task?.status}</span></p>
       </div>
 
       {error && (
@@ -132,7 +135,7 @@ export default function TaskDetail() {
 
       {/* Live Timer */}
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <h2 className="text-xl font-bold mb-4">Timer</h2>
+        <h2 className="text-xl font-bold mb-4">{t('timeTracker.timer')}</h2>
 
         <div className="text-center mb-6">
           <div className="text-5xl font-mono font-bold text-gray-800 mb-4">
@@ -142,9 +145,9 @@ export default function TaskDetail() {
           {isTaskTimerActive && (
             <div className="mb-4">
               {activeTimer.is_paused ? (
-                <span className="text-yellow-600 font-semibold">⏸ Paused</span>
+                <span className="text-yellow-600 font-semibold">⏸ {t('timeline.timerPaused')}</span>
               ) : (
-                <span className="text-green-600 font-semibold">● Running</span>
+                <span className="text-green-600 font-semibold">● {t('timesheet.running')}</span>
               )}
             </div>
           )}
@@ -154,21 +157,21 @@ export default function TaskDetail() {
               <textarea
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
-                placeholder="Add a note (optional)"
+                placeholder={t('taskDetail.addNote')}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md mb-2"
                 rows={2}
               />
             </div>
           )}
 
-          <div className="flex gap-2 justify-center">
+          <div className="flex flex-wrap gap-2 justify-center">
             {!isTaskTimerActive ? (
               <button
                 onClick={handleStart}
                 disabled={isLoading || task?.status !== 'in_progress'}
                 className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
               >
-                ▶ Start
+                ▶ {t('taskDetail.start')}
               </button>
             ) : (
               <>
@@ -178,7 +181,7 @@ export default function TaskDetail() {
                     disabled={isLoading}
                     className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-400"
                   >
-                    ▶ Resume
+                    ▶ {t('taskDetail.resume')}
                   </button>
                 ) : (
                   <button
@@ -186,7 +189,7 @@ export default function TaskDetail() {
                     disabled={isLoading}
                     className="px-6 py-3 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 disabled:bg-gray-400"
                   >
-                    ⏸ Pause
+                    ⏸ {t('taskDetail.pause')}
                   </button>
                 )}
                 <button
@@ -194,7 +197,7 @@ export default function TaskDetail() {
                   disabled={isLoading}
                   className="px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:bg-gray-400"
                 >
-                  ⏹ Stop
+                  ⏹ {t('taskDetail.stop')}
                 </button>
               </>
             )}
@@ -204,28 +207,28 @@ export default function TaskDetail() {
 
       {/* Summary */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-        <h3 className="font-semibold text-blue-900 mb-2">Total Time</h3>
+        <h3 className="font-semibold text-blue-900 mb-2">{t('timeTracker.totalTime')}</h3>
         <p className="text-2xl font-bold text-blue-600">{formatDuration(totalTime.minutes)}</p>
-        <p className="text-sm text-blue-700">({totalTime.hours.toFixed(2)} hours)</p>
+        <p className="text-sm text-blue-700">({totalTime.hours.toFixed(2)} {t('timeline.hours')})</p>
       </div>
 
       {/* Time Logs List */}
       <div className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-xl font-bold mb-4">Time Logs</h2>
+        <h2 className="text-xl font-bold mb-4">{t('timesheet.totalLogs')}</h2>
 
         {timeLogs.length === 0 ? (
-          <p className="text-gray-500 text-center py-8">No time logs yet</p>
+          <p className="text-gray-500 text-center py-8">{t('taskDetail.noLogs')}</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Start</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">End</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Duration</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Note</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('common.date')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('timeline.startDate')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('timeline.endDate')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('timeline.duration')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('common.status')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('taskDetail.note')}</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -238,20 +241,19 @@ export default function TaskDetail() {
                       {new Date(log.start_time).toLocaleTimeString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {log.end_time ? new Date(log.end_time).toLocaleTimeString() : 'Running'}
+                      {log.end_time ? new Date(log.end_time).toLocaleTimeString() : t('timesheet.running')}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {formatDuration(log.duration_minutes - log.paused_duration_minutes)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
-                        className={`px-2 py-1 text-xs rounded-full ${
-                          log.status === 'approved'
-                            ? 'bg-green-100 text-green-800'
-                            : log.status === 'rejected'
+                        className={`px-2 py-1 text-xs rounded-full ${log.status === 'approved'
+                          ? 'bg-green-100 text-green-800'
+                          : log.status === 'rejected'
                             ? 'bg-red-100 text-red-800'
                             : 'bg-yellow-100 text-yellow-800'
-                        }`}
+                          }`}
                       >
                         {log.status}
                       </span>

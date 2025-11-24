@@ -3,6 +3,7 @@ import { JSX } from "react";
 import { useNotification } from "@/contexts/NotificationContext";
 import { useNavigate } from "react-router-dom";
 import NotificationItem from "@/components/NotificationItem";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const ActionCard = React.forwardRef<HTMLButtonElement, {
   title: string;
@@ -37,6 +38,7 @@ const TopQuickActions: FC<TopQuickActionsProps> = () => {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   // hitung notifikasi unread
   const unreadCount = notifications.filter((n) => !n.read).length;
@@ -68,15 +70,11 @@ const TopQuickActions: FC<TopQuickActionsProps> = () => {
     // ✅ tandai notif sudah dibaca
     markAsRead(n.id);
 
-    // ✅ navigasi ke halaman tujuan (default ke /tasks)
-    if (n.path) {
-      navigate(n.path);
-    } else {
-      navigate("/tasks");
-    }
-
     // ✅ tutup dropdown
     setOpen(false);
+
+    // Note: Removed automatic navigation to prevent page refresh
+    // which causes notifications to re-appear
   };
 
   return (
@@ -85,7 +83,7 @@ const TopQuickActions: FC<TopQuickActionsProps> = () => {
       <div className="relative">
         <ActionCard
           ref={buttonRef}
-          title="Notification"
+          title={t('common.notifications')}
           icon={
             <svg viewBox="0 0 24 24" className="w-5 h-5 fill-gray-700 dark:fill-gray-300">
               <path d="M12 22a2 2 0 0 0 2-2H10a2 2 0 0 0 2 2Zm6-6V11a6 6 0 1 0-12 0v5L4 18v1h16v-1l-2-2Z" />
@@ -99,10 +97,10 @@ const TopQuickActions: FC<TopQuickActionsProps> = () => {
         {open && (
           <div
             ref={dropdownRef}
-            className="absolute top-0 right-full mr-3 bg-white dark:bg-gray-800 shadow-2xl rounded-2xl space-y-2 max-h-[70vh] overflow-y-auto z-50 p-4 border border-gray-200 dark:border-gray-700 w-[calc(100vw-2rem)] sm:w-80"
+            className="absolute z-50 bg-white dark:bg-gray-800 shadow-2xl rounded-2xl space-y-2 max-h-[70vh] overflow-y-auto p-4 border border-gray-200 dark:border-gray-700 top-full left-0 mt-2 w-full sm:w-80 sm:top-0 sm:left-auto sm:right-full sm:mt-0 sm:mr-3"
           >
             <div className="flex items-center justify-between mb-3 pb-3 border-b border-gray-200 dark:border-gray-700">
-              <h3 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white">Pemberitahuan</h3>
+              <h3 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white">{t('common.notifications')}</h3>
               <div className="flex items-center gap-2">
                 {unreadCount > 0 && (
                   <button
@@ -112,7 +110,7 @@ const TopQuickActions: FC<TopQuickActionsProps> = () => {
                     className="text-xs px-2 py-1 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white rounded-lg transition-colors"
                     aria-label="Tandai semua sudah dibaca"
                   >
-                    Read All
+                    {t('notifications.readAll')}
                   </button>
                 )}
                 <button
@@ -126,14 +124,14 @@ const TopQuickActions: FC<TopQuickActionsProps> = () => {
                 </button>
               </div>
             </div>
-            {notifications.length === 0 ? (
+            {unreadCount === 0 ? (
               <div className="flex flex-col items-center justify-center py-8">
                 <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-3">
                   <svg className="w-6 h-6 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                   </svg>
                 </div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Belum ada notifikasi</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{t('notifications.noNotifications')}</p>
               </div>
             ) : (
               <ul className="space-y-2">

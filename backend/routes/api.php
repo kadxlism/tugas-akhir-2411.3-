@@ -112,4 +112,8 @@ Route::middleware('auth:sanctum')->prefix('user')->group(function () {
     Route::put('profile/name', [UserProfileController::class, 'updateName']);
     Route::put('profile/email', [UserProfileController::class, 'updateEmail']);
     Route::put('profile/password', [UserProfileController::class, 'updatePassword']);
+    
+    // Device Sessions
+    Route::get('devices', [\App\Http\Controllers\Api\DeviceController::class, 'index']);
+    Route::delete('devices/{id}', [\App\Http\Controllers\Api\DeviceController::class, 'destroy']);
 });

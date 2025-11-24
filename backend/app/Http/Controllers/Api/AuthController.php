@@ -42,11 +42,17 @@ class AuthController extends Controller
     }
 
     $user = User::where('email', $request->email)->firstOrFail();
-    $token = $user->createToken('auth_token')->plainTextToken;
+    $token = $user->createToken('auth_token');
+    
+    // Update token with device info
+    $accessToken = $token->accessToken;
+    $accessToken->ip_address = $request->ip();
+    $accessToken->user_agent = $request->userAgent();
+    $accessToken->save();
 
     return response()->json([
         'user' => $user,
-        'token' => $token,
+        'token' => $token->plainTextToken,
     ]);
 }
 

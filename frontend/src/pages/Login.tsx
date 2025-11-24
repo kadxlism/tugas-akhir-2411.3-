@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/useAuth";
 import { useNavigate } from "react-router-dom";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const Login = () => {
+  const { t } = useLanguage();
   const { login, user } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
@@ -19,7 +21,7 @@ const Login = () => {
     try {
       await login(email, password, rememberMe);
     } catch (err: any) {
-      setError(err.response?.data?.message || "Login gagal");
+      setError(err.response?.data?.message || t('auth.loginFailed'));
     }
   };
 
@@ -35,10 +37,10 @@ const Login = () => {
             </div>
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
-            Welcome Back
+            {t('auth.welcomeBack')}
           </h1>
           <p className="text-gray-600 dark:text-gray-400 text-sm mt-2">
-            Login to your Project Manager
+            {t('auth.loginSubtitle')}
           </p>
         </div>
 
@@ -53,12 +55,12 @@ const Login = () => {
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Email
+              {t('common.email')}
             </label>
             <input
               type="email"
               className="w-full p-3 rounded-xl bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition duration-200"
-              placeholder="your@email.com"
+              placeholder={t('auth.emailPlaceholder')}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -67,7 +69,7 @@ const Login = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Password
+              {t('common.password')}
             </label>
             <input
               type="password"
@@ -87,10 +89,10 @@ const Login = () => {
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
               />
-              Remember me
+              {t('auth.rememberMe')}
             </label>
             <a href="#" className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium hover:underline">
-              Forgot password?
+              {t('auth.forgotPassword')}
             </a>
           </div>
 
@@ -98,18 +100,18 @@ const Login = () => {
             type="submit"
             className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white p-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02]"
           >
-            Sign In
+            {t('auth.signIn')}
           </button>
         </form>
 
         {/* Footer */}
         <p className="mt-8 text-center text-sm text-gray-600 dark:text-gray-400">
-          Don’t have an account?{" "}
+          {t('auth.noAccount')}{" "}
           <a
             href="/register"
             className="text-blue-600 dark:text-blue-400 font-semibold hover:text-blue-700 dark:hover:text-blue-300 hover:underline"
           >
-            Sign up
+            {t('auth.signUp')}
           </a>
         </p>
       </div>

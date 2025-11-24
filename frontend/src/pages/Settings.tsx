@@ -1,18 +1,24 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/useAuth";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import EditNameForm from "@/components/settings/EditNameForm";
 import EditEmailForm from "@/components/settings/EditEmailForm";
 import ChangePasswordForm from "@/components/settings/ChangePasswordForm";
+import DeviceSessions from "@/components/settings/DeviceSessions";
+
+import Modal from "@/components/Modal";
 
 const Settings = () => {
   const { user, logout, setUser } = useAuth();
   const { theme, setTheme } = useTheme();
+  const { language, setLanguage, t } = useLanguage();
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
   const [currentUserName, setCurrentUserName] = useState(user?.name || '');
   const [currentUserEmail, setCurrentUserEmail] = useState(user?.email || '');
+  const [isDeletePhotoModalOpen, setIsDeletePhotoModalOpen] = useState(false);
 
   // Update local state when user changes
   useEffect(() => {
@@ -28,7 +34,7 @@ const Settings = () => {
     if (user && setUser) {
       setUser({ ...user, name: newName });
     }
-    showToastNotification('Nama berhasil diperbarui');
+    showToastNotification(t('settings.nameUpdated'));
   };
 
   // Handle successful email update
@@ -37,19 +43,26 @@ const Settings = () => {
     if (user && setUser) {
       setUser({ ...user, email: newEmail });
     }
-    showToastNotification('Email berhasil diperbarui');
+    showToastNotification(t('settings.emailUpdated'));
   };
 
   // Handle successful password update
   const handlePasswordUpdate = () => {
-    showToastNotification('Password berhasil diperbarui');
+    showToastNotification(t('settings.passwordUpdated'));
   };
 
   // Handle theme change
   const handleThemeChange = (newTheme: 'light' | 'dark') => {
     setTheme(newTheme);
-    showToastNotification(`Tema diubah ke ${newTheme === 'dark' ? 'Gelap' : 'Terang'}`);
+    showToastNotification(`${t('settings.themeChanged')} ${newTheme === 'dark' ? t('settings.darkMode') : t('settings.lightMode')}`);
   };
+
+  // Handle language change
+  const handleLanguageChange = (newLang: 'id' | 'en') => {
+    setLanguage(newLang);
+    showToastNotification(`${t('settings.languageChanged')} ${newLang === 'id' ? t('settings.indonesian') : t('settings.english')}`);
+  };
+
 
   // Fungsi untuk menampilkan toast notification
   const showToastNotification = (message: string) => {
@@ -84,7 +97,7 @@ const Settings = () => {
     link.click();
     URL.revokeObjectURL(url);
 
-    showToastNotification("Data berhasil diekspor!");
+    showToastNotification(t('settings.dataExported'));
   };
 
   const handleImportData = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -101,21 +114,21 @@ const Settings = () => {
         if (data.projects) localStorage.setItem('projects_data', JSON.stringify(data.projects));
         if (data.users) localStorage.setItem('users_data', JSON.stringify(data.users));
 
-        showToastNotification("Data berhasil diimpor! Silakan refresh halaman.");
+        showToastNotification(t('settings.dataImported'));
       } catch (error) {
-        showToastNotification("Error: File tidak valid!");
+        showToastNotification(t('settings.invalidFile'));
       }
     };
     reader.readAsText(file);
   };
 
   const handleClearData = () => {
-    if (window.confirm("Yakin ingin menghapus semua data? Tindakan ini tidak dapat dibatalkan!")) {
+    if (window.confirm(t('settings.clearDataConfirm'))) {
       localStorage.removeItem('clients_data');
       localStorage.removeItem('tasks_data');
       localStorage.removeItem('projects_data');
       localStorage.removeItem('users_data');
-      showToastNotification("Semua data berhasil dihapus!");
+      showToastNotification(t('settings.dataCleared'));
     }
   };
 
@@ -258,18 +271,18 @@ const Settings = () => {
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      showToastNotification("File harus berupa gambar!");
+      showToastNotification(t('settings.mustBeImage'));
       return;
     }
 
     // Validate initial file size (max 10MB before compression)
     if (file.size > 10 * 1024 * 1024) {
-      showToastNotification("Ukuran file maksimal 10MB sebelum kompresi!");
+      showToastNotification(t('settings.maxFileSize'));
       return;
     }
 
     if (!user) {
-      showToastNotification("User tidak ditemukan!");
+      showToastNotification(t('settings.userNotFound'));
       return;
     }
 
@@ -277,7 +290,7 @@ const Settings = () => {
     const userId = user.id || (user as any).user_id || (user as any)._id || String(user.email) || 'default';
 
     if (!userId) {
-      showToastNotification("Gagal menyimpan foto profil: User ID tidak ditemukan!");
+      showToastNotification(t('settings.userIdNotFound'));
       return;
     }
 
@@ -285,7 +298,7 @@ const Settings = () => {
 
     try {
       // Show loading message
-      showToastNotification("Mengompresi foto...");
+      showToastNotification(t('settings.compressing'));
 
       // Compress and resize image (max 600x600px, quality 0.7)
       const compressedImage = await compressImage(file, 600, 600, 0.7);
@@ -310,7 +323,7 @@ const Settings = () => {
           detail: { userId, photo: compressedImage }
         }));
 
-        showToastNotification("Foto profil berhasil diubah!");
+        showToastNotification(t('settings.photoUpdated'));
       } catch (storageError: any) {
         // If storage is full, show helpful error message
         if (storageError.name === 'QuotaExceededError' || storageError.message?.includes('quota') || storageError.message?.includes('kuota')) {
@@ -345,19 +358,24 @@ const Settings = () => {
           // Other errors
           console.error('Error saving profile photo:', storageError);
           const errorMessage = storageError instanceof Error ? storageError.message : 'Unknown error';
-          showToastNotification(`Gagal menyimpan foto profil: ${errorMessage}`);
+          showToastNotification(`${t('settings.savePhotoFailed')}: ${errorMessage}`);
         }
       }
     } catch (error) {
       console.error('Error compressing profile photo:', error);
-      showToastNotification("Gagal mengompresi foto profil: " + (error instanceof Error ? error.message : 'Unknown error'));
+      showToastNotification(`${t('settings.compressFailed')}: ` + (error instanceof Error ? error.message : 'Unknown error'));
     }
   };
 
   // Handle profile photo removal
   const handleRemoveProfilePhoto = () => {
+    setIsDeletePhotoModalOpen(true);
+  };
+
+  const confirmRemoveProfilePhoto = () => {
     if (!user) {
-      showToastNotification("User tidak ditemukan!");
+      showToastNotification(t('settings.userNotFound'));
+      setIsDeletePhotoModalOpen(false);
       return;
     }
 
@@ -365,7 +383,8 @@ const Settings = () => {
     const userId = user.id || (user as any).user_id || (user as any)._id || String(user.email) || 'default';
 
     if (!userId) {
-      showToastNotification("Gagal menghapus foto profil: User ID tidak ditemukan!");
+      showToastNotification(t('settings.deletePhotoFailedId'));
+      setIsDeletePhotoModalOpen(false);
       return;
     }
 
@@ -380,15 +399,53 @@ const Settings = () => {
         detail: { userId, photo: null }
       }));
 
-      showToastNotification("Foto profil berhasil dihapus!");
+      showToastNotification(t('settings.photoDeleted'));
     } catch (error) {
       console.error('Error removing profile photo:', error);
-      showToastNotification("Gagal menghapus foto profil!");
+      showToastNotification(t('settings.deletePhotoFailed'));
+    } finally {
+      setIsDeletePhotoModalOpen(false);
     }
   };
 
   return (
     <div className="min-h-screen">
+      {/* Delete Photo Modal */}
+      {isDeletePhotoModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsDeletePhotoModalOpen(false)} />
+          <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-[90%] max-w-sm p-6 border border-gray-100 dark:border-gray-700">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-xl bg-red-100 text-red-600 flex items-center justify-center">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t('settings.removePhotoTitle')}</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{t('settings.deletePhotoConfirm') || "Apakah Anda yakin ingin menghapus foto profil?"}</p>
+              </div>
+            </div>
+            <div className="space-y-3">
+              <button
+                onClick={confirmRemoveProfilePhoto}
+                className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-red-500 text-white font-semibold shadow-lg shadow-red-500/30 hover:bg-red-600 transition-all duration-200"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                {t('common.confirm') || "Konfirmasi"}
+              </button>
+              <button
+                onClick={() => setIsDeletePhotoModalOpen(false)}
+                className="w-full inline-flex items-center justify-center px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-200"
+              >
+                {t('common.cancel') || "Batal"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Toast Notification */}
       {showToast && (
         <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center space-x-3 backdrop-blur-sm border border-white/20">
@@ -411,8 +468,8 @@ const Settings = () => {
             </svg>
           </div>
           <div>
-            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">Pengaturan</h2>
-            <p className="text-xs sm:text-sm lg:text-base text-gray-600 dark:text-gray-400 hidden sm:block">Kelola preferensi, tema, dan data aplikasi Anda dengan mudah</p>
+            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">{t('settings.title')}</h2>
+            <p className="text-xs sm:text-sm lg:text-base text-gray-600 dark:text-gray-400 hidden sm:block">{t('settings.subtitle')}</p>
           </div>
         </div>
 
@@ -425,7 +482,7 @@ const Settings = () => {
               </svg>
             </div>
             <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">
-              Informasi Pengguna
+              {t('settings.userInfo')}
             </h2>
           </div>
 
@@ -452,7 +509,7 @@ const Settings = () => {
                   <button
                     onClick={handleRemoveProfilePhoto}
                     className="absolute -top-2 -right-2 w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg transition-all duration-200 hover:scale-110"
-                    title="Hapus foto profil"
+                    title={t('settings.removePhotoTitle')}
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -466,7 +523,7 @@ const Settings = () => {
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
-                    <span className="font-semibold">{profilePhoto ? 'Ganti Foto Profil' : 'Unggah Foto Profil'}</span>
+                    <span className="font-semibold">{profilePhoto ? t('settings.changePhoto') : t('settings.uploadPhoto')}</span>
                   </div>
                   <input
                     type="file"
@@ -476,7 +533,7 @@ const Settings = () => {
                   />
                 </label>
                 <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-                  Format: JPG, PNG, GIF (Maks. 10MB, akan dikompresi otomatis)
+                  {t('settings.photoFormat')}
                 </p>
               </div>
             </div>
@@ -492,7 +549,7 @@ const Settings = () => {
               onSuccess={handleEmailUpdate}
             />
             <div className="group sm:col-span-2 lg:col-span-1">
-              <label className="block text-xs sm:text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wide">Role</label>
+              <label className="block text-xs sm:text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wide">{t('settings.role')}</label>
               <div className="bg-white dark:bg-gray-700 p-3 sm:p-4 rounded-xl border border-gray-200 dark:border-gray-600 group-hover:shadow-md transition-all duration-200">
                 <span className="inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium bg-blue-500 text-white capitalize">
                   {user?.role || "N/A"}
@@ -505,6 +562,11 @@ const Settings = () => {
           <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
             <ChangePasswordForm onSuccess={handlePasswordUpdate} />
           </div>
+
+          {/* Device Sessions Section */}
+          <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+            <DeviceSessions />
+          </div>
         </div>
 
         {/* Theme Settings */}
@@ -516,14 +578,14 @@ const Settings = () => {
               </svg>
             </div>
             <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">
-              Tema & Tampilan
+              {t('settings.themeSettings')}
             </h2>
           </div>
 
           <div className="space-y-6 sm:space-y-8">
             <div className="text-center">
-              <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-2">Mode Tampilan</h3>
-              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-4 sm:mb-6">Pilih tema yang sesuai dengan preferensi Anda</p>
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-2">{t('settings.displayMode')}</h3>
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-4 sm:mb-6">{t('settings.displayModeDesc')}</p>
 
               <div className="flex flex-col sm:flex-row justify-center items-stretch sm:items-center gap-3 sm:gap-4">
                 <button
@@ -540,7 +602,7 @@ const Settings = () => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
                       </svg>
                     </div>
-                    <span className="text-sm sm:text-base font-semibold">Terang</span>
+                    <span className="text-sm sm:text-base font-semibold">{t('settings.lightMode')}</span>
                   </div>
                   {theme === 'light' && (
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
@@ -561,7 +623,7 @@ const Settings = () => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                       </svg>
                     </div>
-                    <span className="text-sm sm:text-base font-semibold">Gelap</span>
+                    <span className="text-sm sm:text-base font-semibold">{t('settings.darkMode')}</span>
                   </div>
                   {theme === 'dark' && (
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
@@ -577,7 +639,7 @@ const Settings = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                 </svg>
-                Pratinjau Tema
+                {t('settings.themePreview')}
               </h4>
               <div className={`p-6 rounded-xl transition-all duration-300 ${theme === 'dark'
                 ? 'bg-gradient-to-br from-gray-800 to-gray-900 text-white shadow-2xl'
@@ -593,10 +655,60 @@ const Settings = () => {
                     </svg>
                   </div>
                   <div>
-                    <p className="font-semibold text-lg">Contoh Kartu</p>
-                    <p className="text-sm opacity-80">Ini adalah contoh tampilan dengan tema {theme === 'dark' ? 'gelap' : 'terang'}</p>
+                    <p className="font-semibold text-lg">{t('settings.exampleCard')}</p>
+                    <p className="text-sm opacity-80">{t('settings.exampleCardDesc')} {theme === 'dark' ? t('settings.darkMode') : t('settings.lightMode')}</p>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            {/* Language Selection */}
+            <div className="text-center mt-6 sm:mt-8">
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-2">{t('settings.language')}</h3>
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-4 sm:mb-6">{t('settings.languageDesc')}</p>
+
+              <div className="flex flex-col sm:flex-row justify-center items-stretch sm:items-center gap-3 sm:gap-4">
+                <button
+                  onClick={() => handleLanguageChange('id')}
+                  className={`group relative overflow-hidden px-6 sm:px-8 py-3 sm:py-4 rounded-2xl transition-all duration-300 transform hover:scale-105 ${language === 'id'
+                    ? 'bg-gradient-to-r from-red-500 to-red-600 text-white shadow-2xl shadow-red-500/25'
+                    : 'bg-white/80 dark:bg-gray-700/80 text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-gray-600 border-2 border-gray-200 dark:border-gray-600'
+                    }`}
+                >
+                  <div className="flex items-center justify-center space-x-2 sm:space-x-3">
+                    <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center ${language === 'id' ? 'bg-white/20' : 'bg-red-100 dark:bg-red-900/30'
+                      }`}>
+                      <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+                      </svg>
+                    </div>
+                    <span className="text-sm sm:text-base font-semibold">{t('settings.indonesian')}</span>
+                  </div>
+                  {language === 'id' && (
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                  )}
+                </button>
+
+                <button
+                  onClick={() => handleLanguageChange('en')}
+                  className={`group relative overflow-hidden px-6 sm:px-8 py-3 sm:py-4 rounded-2xl transition-all duration-300 transform hover:scale-105 ${language === 'en'
+                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-2xl shadow-blue-500/25'
+                    : 'bg-white/80 dark:bg-gray-700/80 text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-600 border-2 border-gray-200 dark:border-gray-600'
+                    }`}
+                >
+                  <div className="flex items-center justify-center space-x-2 sm:space-x-3">
+                    <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center ${language === 'en' ? 'bg-white/20' : 'bg-blue-100 dark:bg-blue-900/30'
+                      }`}>
+                      <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+                      </svg>
+                    </div>
+                    <span className="text-sm sm:text-base font-semibold">{t('settings.english')}</span>
+                  </div>
+                  {language === 'en' && (
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                  )}
+                </button>
               </div>
             </div>
           </div>
@@ -610,8 +722,8 @@ const Settings = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
               </svg>
             </div>
-            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold bg-gradient-to-r from-gray-900 to-blue-800 dark:from-white dark:to-blue-200 bg-clip-text text-transparent">
-              Manajemen Data
+            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">
+              {t('settings.dataManagement')}
             </h2>
           </div>
 
@@ -627,10 +739,10 @@ const Settings = () => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                   </div>
-                  <span className="font-semibold text-lg">Ekspor Data</span>
+                  <span className="font-semibold text-lg">{t('settings.exportData')}</span>
                 </div>
               </button>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-3 text-center">Download backup semua data dalam format JSON</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-3 text-center">{t('settings.exportDataDesc')}</p>
             </div>
 
             <div className="group">
@@ -641,7 +753,7 @@ const Settings = () => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                     </svg>
                   </div>
-                  <span className="font-semibold text-lg">Impor Data</span>
+                  <span className="font-semibold text-lg">{t('settings.importData')}</span>
                 </div>
                 <input
                   type="file"
@@ -650,13 +762,13 @@ const Settings = () => {
                   className="hidden"
                 />
               </label>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-3 text-center">Upload file backup untuk restore data</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-3 text-center">{t('settings.importDataDesc')}</p>
             </div>
 
             <div className="group">
               <button
                 onClick={handleClearData}
-                className="w-full bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-6 py-8 rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-2xl hover:shadow-blue-500/25"
+                className="w-full bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-6 py-8 rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-2xl hover:shadow-red-500/25"
               >
                 <div className="flex flex-col items-center space-y-3">
                   <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
@@ -664,10 +776,10 @@ const Settings = () => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
                   </div>
-                  <span className="font-semibold text-lg">Hapus Data</span>
+                  <span className="font-semibold text-lg">{t('settings.clearData')}</span>
                 </div>
               </button>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-3 text-center">Hapus semua data dengan konfirmasi</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-3 text-center">{t('settings.clearDataDesc')}</p>
             </div>
           </div>
         </div>
